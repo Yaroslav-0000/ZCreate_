@@ -3,320 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>ZCreate - Полная версия</title>
+  <title>ZCreate - ТЕКСТУРЫ И ОПТИМИЗАЦИЯ</title>
   <style>
-    body { 
-      margin: 0; 
-      overflow: hidden; 
-      font-family: Arial, sans-serif;
-      touch-action: none;
-    }
-    
-    /* Джойстик */
+    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; touch-action: none; }
     #joystick-area {
-      position: absolute;
-      bottom: 30px;
-      left: 30px;
-      width: 120px;
-      height: 120px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 60px;
-      backdrop-filter: blur(5px);
-      border: 2px solid rgba(255,255,255,0.3);
-      z-index: 30;
+      position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px;
+      background: rgba(255,255,255,0.2); border-radius: 60px; backdrop-filter: blur(5px);
+      border: 2px solid rgba(255,255,255,0.3); z-index: 30;
     }
     #joystick-handle {
-      position: absolute;
-      width: 50px;
-      height: 50px;
-      background: rgba(255,255,255,0.8);
-      border-radius: 25px;
-      top: 35px;
-      left: 35px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      position: absolute; width: 50px; height: 50px; background: rgba(255,255,255,0.8);
+      border-radius: 25px; top: 35px; left: 35px; box-shadow: 0 0 10px rgba(0,0,0,0.3);
       pointer-events: none;
     }
-    
-    /* Кнопки полета */
     #flight-buttons {
-      position: absolute;
-      bottom: 30px;
-      right: 30px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      z-index: 30;
+      position: absolute; bottom: 30px; right: 30px; display: flex; flex-direction: column;
+      gap: 15px; z-index: 30;
     }
     .flight-btn {
-      width: 70px;
-      height: 70px;
-      background: rgba(0,0,0,0.6);
-      border: 2px solid rgba(255,255,255,0.5);
-      border-radius: 35px;
-      color: white;
-      font-size: 24px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(5px);
-      user-select: none;
+      width: 70px; height: 70px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 35px; color: white; font-size: 24px; display: flex; align-items: center;
+      justify-content: center; backdrop-filter: blur(5px); user-select: none;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
-    .flight-btn:active {
-      background: rgba(100,100,255,0.8);
-      transform: scale(0.95);
-    }
-    
-    canvas {
-      touch-action: none;
-      display: block;
-    }
-    
-    /* Отладка */
+    canvas { touch-action: none; display: block; }
     #debug {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: white;
-      background: rgba(0,0,0,0.7);
-      padding: 10px;
-      font-size: 14px;
-      z-index: 100;
-      pointer-events: none;
-      border-radius: 5px;
+      position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7);
+      padding: 5px; font-size: 12px; z-index: 100; pointer-events: none; border-radius: 5px;
     }
-    
-    /* Управление ПК */
     #pc-controls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: white;
-      background: rgba(0,0,0,0.7);
-      padding: 10px;
-      font-size: 14px;
-      z-index: 100;
-      pointer-events: none;
-      border-radius: 5px;
+      position: absolute; top: 10px; right: 10px; color: white; background: rgba(0,0,0,0.7);
+      padding: 5px; font-size: 12px; z-index: 100; pointer-events: none; border-radius: 5px;
     }
-    
-    /* Информация о чанке */
     #chunk-info {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      background: rgba(0,0,0,0.7);
-      padding: 5px 15px;
-      font-size: 14px;
-      z-index: 100;
-      pointer-events: none;
-      border-radius: 20px;
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      color: white; background: rgba(0,0,0,0.7); padding: 5px 15px; font-size: 14px;
+      z-index: 100; pointer-events: none; border-radius: 20px;
     }
-    
-    /* Кнопка сохранения */
     #save-button {
-      position: absolute;
-      top: 70px;
-      right: 10px;
-      background: rgba(0,100,200,0.9);
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
-      font-size: 14px;
-      cursor: pointer;
-      z-index: 100;
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255,255,255,0.3);
+      position: absolute; top: 70px; right: 10px; background: rgba(0,100,200,0.9);
+      color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px;
+      cursor: pointer; z-index: 100; backdrop-filter: blur(5px);
     }
-    #save-button:hover {
-      background: rgba(0,150,255,0.9);
-    }
-    
-    /* Инвентарь */
     #inventory-toggle {
-      position: absolute;
-      top: 120px;
-      right: 10px;
-      background: rgba(150,100,0,0.9);
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
-      font-size: 14px;
-      cursor: pointer;
-      z-index: 100;
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255,255,255,0.3);
+      position: absolute; top: 100px; right: 10px; background: rgba(150,100,0,0.9);
+      color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px;
+      cursor: pointer; z-index: 100;
     }
-    
     #inventory-panel {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 600px;
-      height: 400px;
-      background: rgba(30,30,30,0.95);
-      backdrop-filter: blur(10px);
-      border: 2px solid rgba(255,255,255,0.3);
-      border-radius: 10px;
-      display: none;
-      flex-direction: column;
-      z-index: 200;
-      color: white;
-      font-family: Arial, sans-serif;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 500px; height: 300px; background: rgba(30,30,30,0.95); backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; display: none;
+      flex-direction: column; z-index: 200; color: white;
     }
-    
-    #inventory-panel.visible {
-      display: flex;
-    }
-    
+    #inventory-panel.visible { display: flex; }
     #inventory-tabs {
-      display: flex;
-      gap: 5px;
-      padding: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-      background: rgba(0,0,0,0.3);
-      border-radius: 10px 10px 0 0;
+      display: flex; gap: 5px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.2);
     }
-    
     .inventory-tab {
-      padding: 8px 20px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 5px;
-      cursor: pointer;
-      color: white;
-      font-size: 14px;
-      transition: 0.2s;
+      padding: 5px 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 5px; cursor: pointer; color: white; font-size: 12px;
     }
-    
-    .inventory-tab:hover {
-      background: rgba(255,255,255,0.2);
-    }
-    
-    .inventory-tab.active {
-      background: rgba(100,150,255,0.5);
-      border-color: rgba(100,200,255,0.8);
-    }
-    
+    .inventory-tab.active { background: rgba(100,150,255,0.5); }
     #inventory-content {
-      flex: 1;
-      padding: 15px;
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 5px;
-      overflow-y: auto;
+      flex: 1; padding: 10px; display: grid; grid-template-columns: repeat(6, 1fr);
+      gap: 5px; overflow-y: auto;
     }
-    
     .inventory-slot {
-      aspect-ratio: 1;
-      background: rgba(0,0,0,0.4);
-      border: 2px solid rgba(255,255,255,0.2);
-      border-radius: 5px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      position: relative;
-      transition: 0.2s;
+      aspect-ratio: 1; background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 5px; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; cursor: pointer; position: relative; font-size: 10px;
     }
-    
-    .inventory-slot:hover {
-      background: rgba(100,100,100,0.5);
-      border-color: rgba(255,255,255,0.5);
-    }
-    
-    .inventory-slot.selected {
-      border-color: #ffaa00;
-      background: rgba(255,170,0,0.2);
-      box-shadow: 0 0 15px rgba(255,170,0,0.5);
-    }
-    
-    .slot-icon {
-      width: 40px;
-      height: 40px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 5px;
-      margin-bottom: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-    
-    .slot-count {
-      position: absolute;
-      bottom: 2px;
-      right: 5px;
-      font-size: 12px;
-      color: #aaa;
-    }
-    
-    .slot-name {
-      font-size: 10px;
-      text-align: center;
-      color: #ddd;
-    }
-    
-    /* Панель быстрого доступа */
+    .inventory-slot:hover { background: rgba(100,100,100,0.5); }
+    .inventory-slot.selected { border-color: #ffaa00; background: rgba(255,170,0,0.2); }
+    .slot-icon { font-size: 20px; }
+    .slot-count { position: absolute; bottom: 2px; right: 5px; font-size: 10px; color: #aaa; }
     #hotbar {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 5px;
-      background: rgba(0,0,0,0.6);
-      padding: 8px;
-      border-radius: 10px;
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255,255,255,0.2);
-      z-index: 150;
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 5px; background: rgba(0,0,0,0.6); padding: 5px;
+      border-radius: 10px; z-index: 150;
     }
-    
     .hotbar-slot {
-      width: 50px;
-      height: 50px;
-      background: rgba(255,255,255,0.1);
-      border: 2px solid rgba(255,255,255,0.2);
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      cursor: pointer;
+      width: 40px; height: 40px; background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.2); border-radius: 5px; display: flex;
+      align-items: center; justify-content: center; position: relative; cursor: pointer;
     }
-    
-    .hotbar-slot.selected {
-      border-color: #ffaa00;
-      background: rgba(255,170,0,0.2);
-    }
-    
-    .hotbar-slot .slot-count {
-      bottom: 2px;
-      right: 5px;
-    }
-    
-    .hotbar-slot .slot-icon {
-      width: 30px;
-      height: 30px;
-      margin-bottom: 0;
-    }
+    .hotbar-slot.selected { border-color: #ffaa00; background: rgba(255,170,0,0.2); }
+    .hotbar-slot .slot-icon { font-size: 16px; }
   </style>
 </head>
 <body>
-  <div id="debug">Касаний: 0 | Джойстик: нет | Камера: нет</div>
-  <div id="pc-controls">WASD - движение | Мышь - поворот | ЛКМ - сломать | ПКМ - поставить</div>
-  <div id="chunk-info">Чанк: 0,0 | Блоков: 0</div>
+  <div id="debug"></div>
+  <div id="pc-controls">WASD+мышь | ЛКМ сломать | ПКМ поставить | I инвентарь</div>
+  <div id="chunk-info"></div>
   
-  <button id="save-button">💾 Сохранить мир</button>
-  <button id="inventory-toggle">🎒 Инвентарь (I)</button>
+  <button id="save-button">💾</button>
+  <button id="inventory-toggle">🎒</button>
   
   <div id="inventory-panel">
     <div id="inventory-tabs"></div>
@@ -325,10 +107,7 @@
   
   <div id="hotbar"></div>
   
-  <div id="joystick-area">
-    <div id="joystick-handle"></div>
-  </div>
-  
+  <div id="joystick-area"><div id="joystick-handle"></div></div>
   <div id="flight-buttons">
     <div class="flight-btn" id="btn-up">⬆️</div>
     <div class="flight-btn" id="btn-down">⬇️</div>
@@ -337,1012 +116,602 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <script>
-    // ==================== РЕЕСТРЫ ====================
-    const Registry = {
-      blocks: {},
-      items: {},
-      tabs: {},
-      categories: {}
-    };
-    
-    // Регистрация вкладок
-    function registerTab(id, name, icon) {
-      Registry.tabs[id] = { id, name, icon, items: [] };
-      Registry.categories[id] = [];
-    }
-    
-    // Регистрация предмета
-    function registerItem(id, options) {
-      Registry.items[id] = { id, ...options };
-      if (options.tab && Registry.tabs[options.tab]) {
-        Registry.tabs[options.tab].items.push(id);
-      }
-    }
-    
-    // Регистрация блока (автоматически создает предмет)
-    function registerBlock(id, options) {
-      Registry.blocks[id] = { id, ...options };
-      // Автоматически регистрируем предмет для блока
-      registerItem(id, {
-        name: options.name || id,
-        icon: options.icon || '🧱',
-        tab: options.tab || 'building',
-        stack: 64,
-        blockId: id,
-        type: 'block'
-      });
-    }
-    
-    // Создаем вкладки
-    registerTab('building', 'Строительство', '🏗️');
-    registerTab('nature', 'Природа', '🌿');
-    registerTab('items', 'Предметы', '📦');
-    registerTab('tools', 'Инструменты', '🔧');
-    
-    // Регистрируем блоки
-    registerBlock('stone', {
-      name: 'Камень',
-      icon: '🪨',
-      tab: 'building',
-      textures: {
-        top: 'stone.png', bottom: 'stone.png', left: 'stone.png',
-        right: 'stone.png', front: 'stone.png', back: 'stone.png'
-      },
-      hardness: 3
-    });
-    
-    registerBlock('grass', {
-      name: 'Трава',
-      icon: '🌱',
-      tab: 'nature',
-      textures: {
-        top: 'grass_block_top.png', bottom: 'dirt.png',
-        left: 'grass_block_side.png', right: 'grass_block_side.png',
-        front: 'grass_block_side.png', back: 'grass_block_side.png'
-      },
-      hardness: 1
-    });
-    
-    registerBlock('dirt', {
-      name: 'Земля',
-      icon: '🟫',
-      tab: 'nature',
-      textures: {
-        top: 'dirt.png', bottom: 'dirt.png', left: 'dirt.png',
-        right: 'dirt.png', front: 'dirt.png', back: 'dirt.png'
-      },
-      hardness: 1
-    });
-    
-    registerBlock('wood', {
-      name: 'Дерево',
-      icon: '🪵',
-      tab: 'nature',
-      textures: {
-        top: 'wood_top.png', bottom: 'wood_top.png',
-        left: 'wood_side.png', right: 'wood_side.png',
-        front: 'wood_side.png', back: 'wood_side.png'
-      },
-      hardness: 2
-    });
-    
-    registerBlock('leaves', {
-      name: 'Листва',
-      icon: '🍃',
-      tab: 'nature',
-      textures: {
-        top: 'leaves.png', bottom: 'leaves.png',
-        left: 'leaves.png', right: 'leaves.png',
-        front: 'leaves.png', back: 'leaves.png'
-      },
-      hardness: 0.3
-    });
-    
-    registerBlock('sand', {
-      name: 'Песок',
-      icon: '⏳',
-      tab: 'nature',
-      textures: {
-        top: 'sand.png', bottom: 'sand.png',
-        left: 'sand.png', right: 'sand.png',
-        front: 'sand.png', back: 'sand.png'
-      },
-      hardness: 0.5
-    });
-    
-    // Регистрируем отдельные предметы
-    registerItem('stick', {
-      name: 'Палка',
-      icon: '🥢',
-      tab: 'items',
-      stack: 64,
-      type: 'item'
-    });
-    
-    registerItem('coal', {
-      name: 'Уголь',
-      icon: '⚫',
-      tab: 'items',
-      stack: 64,
-      type: 'item'
-    });
-    
-    registerItem('iron_ingot', {
-      name: 'Железо',
-      icon: '⛓️',
-      tab: 'items',
-      stack: 64,
-      type: 'item'
-    });
-    
-    registerItem('wood_pickaxe', {
-      name: 'Деревянная кирка',
-      icon: '⛏️',
-      tab: 'tools',
-      stack: 1,
-      type: 'tool',
-      toolLevel: 1
-    });
-    
-    // ==================== ИНИЦИАЛИЗАЦИЯ THREE ====================
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias:true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    document.body.appendChild(renderer.domElement);
+    (function() {
+      // ==================== ОПТИМИЗАЦИИ ====================
+      const fpsLimit = 30;
+      let lastFrame = 0;
+      
+      // Пул векторов
+      const vecPool = [];
+      for (let i = 0; i < 10; i++) vecPool.push(new THREE.Vector3());
+      function getVec() { return vecPool.pop() || new THREE.Vector3(); }
+      function freeVec(v) { vecPool.push(v); }
 
-    // Загружаем сохраненную позицию
-    let savedPos = localStorage.getItem('playerPosition');
-    if (savedPos) {
+      // ==================== РЕЕСТРЫ ====================
+      const Registry = { blocks: {}, items: {}, tabs: {} };
+      
+      function registerTab(id, name, icon) { Registry.tabs[id] = { id, name, icon, items: [] }; }
+      function registerItem(id, options) { 
+        Registry.items[id] = { id, ...options }; 
+        if (options.tab) Registry.tabs[options.tab]?.items.push(id);
+      }
+      function registerBlock(id, options) { 
+        Registry.blocks[id] = { id, ...options };
+        registerItem(id, { 
+          name: options.name, 
+          icon: options.icon, 
+          tab: options.tab, 
+          stack: 64, 
+          blockId: id, 
+          type: 'block' 
+        });
+      }
+      
+      registerTab('building', 'Стройка', '🏗️');
+      registerTab('nature', 'Природа', '🌿');
+      
+      // Регистрируем блоки с текстурами
+      registerBlock('stone', { 
+        name: 'Камень', 
+        icon: '🪨', 
+        tab: 'building', 
+        textures: {
+          top: 'stone.png', bottom: 'stone.png', left: 'stone.png',
+          right: 'stone.png', front: 'stone.png', back: 'stone.png'
+        }
+      });
+      
+      registerBlock('grass', { 
+        name: 'Трава', 
+        icon: '🌱', 
+        tab: 'nature',
+        textures: {
+          top: 'grass_block_top.png', bottom: 'dirt.png',
+          left: 'grass_block_side.png', right: 'grass_block_side.png',
+          front: 'grass_block_side.png', back: 'grass_block_side.png'
+        }
+      });
+      
+      registerBlock('dirt', { 
+        name: 'Земля', 
+        icon: '🟫', 
+        tab: 'nature',
+        textures: {
+          top: 'dirt.png', bottom: 'dirt.png', left: 'dirt.png',
+          right: 'dirt.png', front: 'dirt.png', back: 'dirt.png'
+        }
+      });
+      
+      registerItem('stick', { name: 'Палка', icon: '🥢', tab: 'building', stack: 64, type: 'item' });
+
+      // ==================== THREE ====================
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      document.body.appendChild(renderer.domElement);
+
+      // Загружаем позицию
       try {
-        savedPos = JSON.parse(savedPos);
-        camera.position.set(savedPos.x, savedPos.y, savedPos.z);
-      } catch (e) {
-        camera.position.set(8, 20, 8);
-      }
-    } else {
-      camera.position.set(8, 20, 8);
-    }
-    
-    // ==================== ИНВЕНТАРЬ ====================
-    let inventory = {
-      slots: Array(32).fill(null).map(() => ({ item: null, count: 0 })),
-      hotbar: Array(8).fill(null).map(() => ({ item: null, count: 0 })),
-      selectedHotbar: 0
-    };
-    
-    // Загружаем инвентарь
-    try {
-      const savedInventory = localStorage.getItem('inventory');
-      if (savedInventory) {
-        inventory = JSON.parse(savedInventory);
-      } else {
-        // Начальный инвентарь
-        inventory.hotbar[0] = { item: 'grass', count: 64 };
-        inventory.hotbar[1] = { item: 'dirt', count: 64 };
-        inventory.hotbar[2] = { item: 'stone', count: 64 };
-        inventory.hotbar[3] = { item: 'wood', count: 64 };
-        inventory.hotbar[4] = { item: 'leaves', count: 64 };
-        inventory.slots[0] = { item: 'stick', count: 16 };
-        inventory.slots[1] = { item: 'coal', count: 32 };
-        inventory.slots[2] = { item: 'iron_ingot', count: 8 };
-      }
-    } catch (e) {
-      console.log('Нет инвентаря');
-    }
-    
-    // Обновление UI инвентаря
-    function updateInventoryUI() {
-      const tabsContainer = document.getElementById('inventory-tabs');
-      const contentContainer = document.getElementById('inventory-content');
-      const hotbarContainer = document.getElementById('hotbar');
+        const saved = localStorage.getItem('pos');
+        if (saved) {
+          const p = JSON.parse(saved);
+          camera.position.set(p.x, p.y, p.z);
+        } else camera.position.set(8, 20, 8);
+      } catch { camera.position.set(8, 20, 8); }
+
+      // ==================== ТЕКСТУРЫ (загружаем 1 раз) ====================
+      const loader = new THREE.TextureLoader();
+      const textureCache = {};
       
-      // Отрисовка вкладок
-      tabsContainer.innerHTML = '';
-      Object.values(Registry.tabs).forEach(tab => {
-        const tabEl = document.createElement('div');
-        tabEl.className = `inventory-tab ${currentTab === tab.id ? 'active' : ''}`;
-        tabEl.innerHTML = `${tab.icon} ${tab.name}`;
-        tabEl.onclick = () => {
-          currentTab = tab.id;
-          updateInventoryUI();
-        };
-        tabsContainer.appendChild(tabEl);
-      });
-      
-      // Отрисовка предметов текущей вкладки
-      contentContainer.innerHTML = '';
-      const tabItems = Registry.tabs[currentTab]?.items || [];
-      
-      // Сначала показываем слоты инвентаря с предметами этой вкладки
-      inventory.slots.forEach((slot, index) => {
-        if (slot.item && Registry.items[slot.item]?.tab === currentTab) {
-          const item = Registry.items[slot.item];
-          const slotEl = document.createElement('div');
-          slotEl.className = 'inventory-slot';
-          slotEl.innerHTML = `
-            <div class="slot-icon">${item.icon || '📦'}</div>
-            <div class="slot-name">${item.name}</div>
-            <div class="slot-count">${slot.count}</div>
-          `;
-          slotEl.onclick = () => selectInventoryItem(item.id);
-          contentContainer.appendChild(slotEl);
-        }
-      });
-      
-      // Потом показываем все доступные предметы из реестра (для крафта/творчества)
-      tabItems.forEach(itemId => {
-        const item = Registry.items[itemId];
-        // Проверяем, есть ли уже такой предмет в инвентаре
-        const existingSlot = inventory.slots.find(s => s.item === itemId);
-        if (!existingSlot) {
-          const slotEl = document.createElement('div');
-          slotEl.className = 'inventory-slot';
-          slotEl.innerHTML = `
-            <div class="slot-icon">${item.icon || '📦'}</div>
-            <div class="slot-name">${item.name}</div>
-            <div class="slot-count">0</div>
-          `;
-          slotEl.onclick = () => selectInventoryItem(itemId);
-          contentContainer.appendChild(slotEl);
-        }
-      });
-      
-      // Отрисовка хотбара
-      hotbarContainer.innerHTML = '';
-      inventory.hotbar.forEach((slot, index) => {
-        if (slot.item) {
-          const item = Registry.items[slot.item];
-          const slotEl = document.createElement('div');
-          slotEl.className = `hotbar-slot ${inventory.selectedHotbar === index ? 'selected' : ''}`;
-          slotEl.innerHTML = `
-            <div class="slot-icon">${item.icon || '📦'}</div>
-            <div class="slot-count">${slot.count}</div>
-          `;
-          slotEl.onclick = () => {
-            inventory.selectedHotbar = index;
-            updateInventoryUI();
-          };
-          hotbarContainer.appendChild(slotEl);
-        } else {
-          const slotEl = document.createElement('div');
-          slotEl.className = `hotbar-slot ${inventory.selectedHotbar === index ? 'selected' : ''}`;
-          hotbarContainer.appendChild(slotEl);
-        }
-      });
-    }
-    
-    let currentTab = 'building';
-    let inventoryVisible = false;
-    
-    // Выбор предмета в инвентаре
-    function selectInventoryItem(itemId) {
-      // Ищем свободный слот в хотбаре
-      for (let i = 0; i < inventory.hotbar.length; i++) {
-        if (!inventory.hotbar[i].item) {
-          inventory.hotbar[i] = { item: itemId, count: 64 };
-          updateInventoryUI();
-          return;
-        }
-      }
-      alert('Хотбар полон!');
-    }
-    
-    // Получение текущего предмета
-    function getCurrentItem() {
-      return inventory.hotbar[inventory.selectedHotbar];
-    }
-    
-    // Уменьшение количества предмета
-    function useCurrentItem() {
-      const slot = inventory.hotbar[inventory.selectedHotbar];
-      if (slot && slot.count > 0) {
-        slot.count--;
-        if (slot.count <= 0) {
-          inventory.hotbar[inventory.selectedHotbar] = { item: null, count: 0 };
-        }
-        updateInventoryUI();
-        return true;
-      }
-      return false;
-    }
-    
-    // Добавление предмета
-    function addItem(itemId, count = 1) {
-      // Сначала ищем в хотбаре
-      for (let i = 0; i < inventory.hotbar.length; i++) {
-        if (inventory.hotbar[i].item === itemId) {
-          inventory.hotbar[i].count += count;
-          updateInventoryUI();
-          return true;
-        }
-      }
-      
-      // Потом в основном инвентаре
-      for (let i = 0; i < inventory.slots.length; i++) {
-        if (inventory.slots[i].item === itemId) {
-          inventory.slots[i].count += count;
-          updateInventoryUI();
-          return true;
-        }
-      }
-      
-      // Ищем пустой слот
-      for (let i = 0; i < inventory.slots.length; i++) {
-        if (!inventory.slots[i].item) {
-          inventory.slots[i] = { item: itemId, count };
-          updateInventoryUI();
-          return true;
-        }
-      }
-      
-      return false;
-    }
-    
-    // ==================== ЗАГРУЗКА ТЕКСТУР ====================
-    const loader = new THREE.TextureLoader();
-    
-    // Функция загрузки текстур для блока
-    function loadBlockTextures(blockId) {
-      const block = Registry.blocks[blockId];
-      if (!block) return null;
-      
-      const textures = {};
-      for (let side of ["top", "bottom", "left", "right", "front", "back"]) {
-        if (block.textures[side]) {
+      function getTexture(path) {
+        if (!path) return null;
+        if (!textureCache[path]) {
           try {
-            let tex = loader.load(`textures/${block.textures[side]}`);
+            const tex = loader.load(path);
             tex.magFilter = THREE.NearestFilter;
             tex.minFilter = THREE.NearestFilter;
             tex.generateMipmaps = false;
-            textures[side] = tex;
-          } catch (e) {
-            textures[side] = null;
+            textureCache[path] = tex;
+          } catch {
+            textureCache[path] = null;
           }
-        } else {
-          textures[side] = null;
         }
-      }
-      return textures;
-    }
-    
-    // ==================== ЧАНКОВАЯ СИСТЕМА ====================
-    const CHUNK_SIZE = 4;
-    const WORLD_HEIGHT = 16;
-    const RENDER_DISTANCE = 3;
-    
-    const chunks = new Map();
-    let activeChunks = new Set();
-    
-    const SAVE_KEY = 'zcreate_world';
-    
-    // Загружаем сохраненный мир
-    let savedWorld = {};
-    try {
-      const saved = localStorage.getItem(SAVE_KEY);
-      if (saved) {
-        savedWorld = JSON.parse(saved);
-      }
-    } catch (e) {}
-    
-    // Класс блока
-    class Block {
-      constructor(type, x, y, z) {
-        this.type = type;
-        this.mesh = this.createMesh();
-        this.mesh.position.set(x, y, z);
-        this.mesh.userData = { type, x, y, z, block: this };
+        return textureCache[path];
       }
 
-      createMesh() {
-        const block = Registry.blocks[this.type];
-        if (!block) {
-          return new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({visible: false}));
-        }
-
-        const textures = loadBlockTextures(this.type);
+      // ==================== МАТЕРИАЛЫ (создаем один раз на каждый тип блока) ====================
+      const materialCache = {};
+      
+      function getMaterialsForBlock(blockId) {
+        if (materialCache[blockId]) return materialCache[blockId];
+        
+        const block = Registry.blocks[blockId];
+        if (!block) return null;
         
         const materials = [
-          new THREE.MeshBasicMaterial({ map: textures?.right || null }),
-          new THREE.MeshBasicMaterial({ map: textures?.left || null }),
-          new THREE.MeshBasicMaterial({ map: textures?.top || null }),
-          new THREE.MeshBasicMaterial({ map: textures?.bottom || null }),
-          new THREE.MeshBasicMaterial({ map: textures?.front || null }),
-          new THREE.MeshBasicMaterial({ map: textures?.back || null })
+          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.right) }),
+          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.left) }),
+          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.top) }),
+          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.bottom) }),
+          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.front) }),
+          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.back) })
         ];
-
-        return new THREE.Mesh(new THREE.BoxGeometry(1,1,1), materials);
-      }
-      
-      remove() {
-        scene.remove(this.mesh);
-      }
-    }
-
-    // Класс чанка
-    class Chunk {
-      constructor(cx, cz) {
-        this.cx = cx;
-        this.cz = cz;
-        this.blocks = new Map(); // ключ "x,y,z" -> block
-        this.meshGroup = new THREE.Group();
-        this.isGenerated = false;
-      }
-
-      generate() {
-        const startX = this.cx * CHUNK_SIZE;
-        const startZ = this.cz * CHUNK_SIZE;
-        const chunkKey = getChunkKey(this.cx, this.cz);
         
-        if (savedWorld[chunkKey]) {
-          // Загружаем из сохранения
-          const blockData = savedWorld[chunkKey];
-          for (let data of blockData) {
-            const key = `${data.x},${data.y},${data.z}`;
-            const block = new Block(data.type, data.x, data.y, data.z);
-            this.blocks.set(key, block);
-            this.meshGroup.add(block.mesh);
+        materialCache[blockId] = materials;
+        return materials;
+      }
+
+      // ==================== ИНВЕНТАРЬ ====================
+      let inventory = {
+        hotbar: Array(8).fill(null).map(() => ({ item: null, count: 0 })),
+        selectedHotbar: 0
+      };
+      
+      try {
+        const saved = localStorage.getItem('inv');
+        if (saved) inventory = JSON.parse(saved);
+        else {
+          inventory.hotbar[0] = { item: 'grass', count: 64 };
+          inventory.hotbar[1] = { item: 'dirt', count: 64 };
+          inventory.hotbar[2] = { item: 'stone', count: 64 };
+        }
+      } catch {}
+
+      let currentTab = 'building';
+      let inventoryVisible = false;
+
+      function updateInventoryUI() {
+        const tabs = document.getElementById('inventory-tabs');
+        const content = document.getElementById('inventory-content');
+        const hotbar = document.getElementById('hotbar');
+        
+        tabs.innerHTML = '';
+        Object.values(Registry.tabs).forEach(tab => {
+          const el = document.createElement('div');
+          el.className = `inventory-tab ${currentTab === tab.id ? 'active' : ''}`;
+          el.innerHTML = `${tab.icon} ${tab.name}`;
+          el.onclick = () => { currentTab = tab.id; updateInventoryUI(); };
+          tabs.appendChild(el);
+        });
+        
+        content.innerHTML = '';
+        Registry.tabs[currentTab]?.items.forEach(itemId => {
+          const item = Registry.items[itemId];
+          const el = document.createElement('div');
+          el.className = 'inventory-slot';
+          el.innerHTML = `<div class="slot-icon">${item.icon}</div><div>${item.name}</div>`;
+          el.onclick = () => {
+            for (let i = 0; i < inventory.hotbar.length; i++) {
+              if (!inventory.hotbar[i].item) {
+                inventory.hotbar[i] = { item: itemId, count: 64 };
+                updateInventoryUI();
+                return;
+              }
+            }
+          };
+          content.appendChild(el);
+        });
+        
+        hotbar.innerHTML = '';
+        inventory.hotbar.forEach((slot, i) => {
+          const el = document.createElement('div');
+          el.className = `hotbar-slot ${inventory.selectedHotbar === i ? 'selected' : ''}`;
+          if (slot.item) {
+            const item = Registry.items[slot.item];
+            el.innerHTML = `<div class="slot-icon">${item.icon}</div><div class="slot-count">${slot.count}</div>`;
           }
-        } else {
-          // Генерируем новый чанк
+          el.onclick = () => { inventory.selectedHotbar = i; updateInventoryUI(); };
+          hotbar.appendChild(el);
+        });
+      }
+
+      function getCurrentItem() { return inventory.hotbar[inventory.selectedHotbar]; }
+      
+      function useCurrentItem() {
+        const s = inventory.hotbar[inventory.selectedHotbar];
+        if (s?.count > 0) {
+          s.count--;
+          if (s.count <= 0) inventory.hotbar[inventory.selectedHotbar] = { item: null, count: 0 };
+          updateInventoryUI();
+          return true;
+        }
+        return false;
+      }
+
+      function addItemToHotbar(itemId) {
+        for (let i = 0; i < inventory.hotbar.length; i++) {
+          if (!inventory.hotbar[i].item) {
+            inventory.hotbar[i] = { item: itemId, count: 1 };
+            updateInventoryUI();
+            return true;
+          }
+        }
+        return false;
+      }
+
+      // ==================== ЧАНКИ ====================
+      const CHUNK_SIZE = 4;
+      const WORLD_HEIGHT = 16;
+      const RENDER_DISTANCE = 2;
+      const chunks = new Map();
+      let activeChunks = new Set();
+
+      // ОДНА геометрия на все блоки
+      const boxGeom = new THREE.BoxGeometry(1, 1, 1);
+
+      class Chunk {
+        constructor(cx, cz) {
+          this.cx = cx; this.cz = cz;
+          this.blocks = new Map();
+          this.meshGroup = new THREE.Group();
+          this.generated = false;
+        }
+
+        generate() {
+          const startX = this.cx * CHUNK_SIZE;
+          const startZ = this.cz * CHUNK_SIZE;
+          
           for (let x = 0; x < CHUNK_SIZE; x++) {
             for (let z = 0; z < CHUNK_SIZE; z++) {
-              const worldX = startX + x;
-              const worldZ = startZ + z;
+              const wx = startX + x;
+              const wz = startZ + z;
               
-              const height = Math.floor(
-                Math.sin(worldX * 0.5) * Math.cos(worldZ * 0.5) * 4 + 
-                Math.sin(worldX * 0.2) * 2 + 
-                Math.cos(worldZ * 0.3) * 2 + 
-                8
-              );
+              // Простая генерация
+              const h = Math.floor(Math.sin(wx * 0.5) * Math.cos(wz * 0.5) * 3 + 8);
               
               for (let y = 0; y < WORLD_HEIGHT; y++) {
-                let blockType = null;
+                let type = null;
+                if (y === 0) type = 'stone';
+                else if (y < h - 2) type = 'stone';
+                else if (y < h - 1) type = 'dirt';
+                else if (y === h) type = 'grass';
+                else if (y < h) type = 'dirt';
                 
-                if (y === 0) {
-                  blockType = 'stone';
-                } else if (y < height - 3) {
-                  blockType = 'stone';
-                } else if (y < height - 1) {
-                  blockType = 'dirt';
-                } else if (y === height) {
-                  blockType = 'grass';
-                } else if (y < height) {
-                  blockType = 'dirt';
-                }
-                
-                if (blockType) {
-                  const key = `${worldX},${y},${worldZ}`;
-                  const block = new Block(blockType, worldX, y, worldZ);
-                  this.blocks.set(key, block);
-                  this.meshGroup.add(block.mesh);
+                if (type) {
+                  const materials = getMaterialsForBlock(type);
+                  const mesh = new THREE.Mesh(boxGeom, materials);
+                  mesh.position.set(wx, y, wz);
+                  mesh.userData = { type, x: wx, y, z: wz };
+                  this.blocks.set(`${wx},${y},${wz}`, mesh);
+                  this.meshGroup.add(mesh);
                 }
               }
             }
           }
+          this.generated = true;
+        }
+
+        show() { 
+          if (!this.generated) this.generate(); 
+          scene.add(this.meshGroup); 
         }
         
-        this.isGenerated = true;
-      }
-
-      show() {
-        if (!this.isGenerated) this.generate();
-        scene.add(this.meshGroup);
-      }
-
-      hide() {
-        scene.remove(this.meshGroup);
-      }
-      
-      getBlock(x, y, z) {
-        return this.blocks.get(`${x},${y},${z}`);
-      }
-      
-      setBlock(x, y, z, type) {
-        const key = `${x},${y},${z}`;
-        const oldBlock = this.blocks.get(key);
-        if (oldBlock) {
-          this.meshGroup.remove(oldBlock.mesh);
+        hide() { scene.remove(this.meshGroup); }
+        
+        removeBlock(x, y, z) {
+          const key = `${x},${y},${z}`;
+          const mesh = this.blocks.get(key);
+          if (mesh) {
+            this.meshGroup.remove(mesh);
+            this.blocks.delete(key);
+            return true;
+          }
+          return false;
         }
         
-        if (type) {
-          const block = new Block(type, x, y, z);
-          this.blocks.set(key, block);
-          this.meshGroup.add(block.mesh);
-        } else {
-          this.blocks.delete(key);
+        addBlock(x, y, z, type) {
+          const materials = getMaterialsForBlock(type);
+          const mesh = new THREE.Mesh(boxGeom, materials);
+          mesh.position.set(x, y, z);
+          mesh.userData = { type, x, y, z };
+          this.blocks.set(`${x},${y},${z}`, mesh);
+          this.meshGroup.add(mesh);
         }
       }
-      
-      save() {
-        const blocks = [];
-        for (const block of this.blocks.values()) {
-          blocks.push({
-            type: block.type,
-            x: block.mesh.position.x,
-            y: block.mesh.position.y,
-            z: block.mesh.position.z
-          });
-        }
-        return blocks;
-      }
-    }
 
-    function getChunkKey(cx, cz) {
-      return `${cx},${cz}`;
-    }
+      function getChunkKey(cx, cz) { return `${cx},${cz}`; }
 
-    // Сохранение мира
-    function saveWorld() {
-      const saveData = {};
-      for (const [key, chunk] of chunks) {
-        const chunkData = chunk.save();
-        if (chunkData.length > 0) {
-          saveData[key] = chunkData;
-        }
-      }
-      
-      localStorage.setItem('playerPosition', JSON.stringify({
-        x: camera.position.x,
-        y: camera.position.y,
-        z: camera.position.z
-      }));
-      
-      localStorage.setItem('inventory', JSON.stringify(inventory));
-      localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
-      
-      document.getElementById('save-button').innerHTML = '✅ Сохранено!';
-      setTimeout(() => {
-        document.getElementById('save-button').innerHTML = '💾 Сохранить мир';
-      }, 2000);
-    }
-
-    // Обновление чанков
-    function updateChunks() {
-      const playerChunkX = Math.floor(camera.position.x / CHUNK_SIZE);
-      const playerChunkZ = Math.floor(camera.position.z / CHUNK_SIZE);
-      
-      let totalBlocks = 0;
-      const newActiveChunks = new Set();
-      
-      for (let dx = -RENDER_DISTANCE; dx <= RENDER_DISTANCE; dx++) {
-        for (let dz = -RENDER_DISTANCE; dz <= RENDER_DISTANCE; dz++) {
-          const cx = playerChunkX + dx;
-          const cz = playerChunkZ + dz;
-          const key = getChunkKey(cx, cz);
-          newActiveChunks.add(key);
-          
-          if (!chunks.has(key)) {
-            const chunk = new Chunk(cx, cz);
-            chunks.set(key, chunk);
-            chunk.show();
-          } else {
-            const chunk = chunks.get(key);
-            if (!chunk.meshGroup.parent) {
-              chunk.show();
+      function updateChunks() {
+        const cx = Math.floor(camera.position.x / CHUNK_SIZE);
+        const cz = Math.floor(camera.position.z / CHUNK_SIZE);
+        
+        let total = 0;
+        const newActive = new Set();
+        
+        for (let dx = -RENDER_DISTANCE; dx <= RENDER_DISTANCE; dx++) {
+          for (let dz = -RENDER_DISTANCE; dz <= RENDER_DISTANCE; dz++) {
+            const k = getChunkKey(cx + dx, cz + dz);
+            newActive.add(k);
+            
+            if (!chunks.has(k)) {
+              const c = new Chunk(cx + dx, cz + dz);
+              chunks.set(k, c);
+              c.show();
+            } else {
+              const c = chunks.get(k);
+              if (!c.meshGroup.parent) c.show();
             }
-          }
-          
-          if (chunks.has(key)) {
-            totalBlocks += chunks.get(key).blocks.size;
+            if (chunks.has(k)) total += chunks.get(k).blocks.size;
           }
         }
+        
+        for (const [k, c] of chunks) {
+          if (!newActive.has(k) && c.meshGroup.parent) c.hide();
+        }
+        
+        activeChunks = newActive;
+        document.getElementById('chunk-info').innerHTML = `Чанк: ${cx},${cz} | Блоков: ${total}`;
       }
+
+      // ==================== УПРАВЛЕНИЕ ====================
+      const control = { w:0, a:0, s:0, d:0, q:0, e:0, mx:0, my:0, flyUp:0, flyDown:0 };
+      let pitch = -0.3, yaw = 0.8;
+      const speed = 0.2;
+
+      // Клавиши
+      window.addEventListener('keydown', e => {
+        switch(e.code) {
+          case 'KeyW': control.w = 1; e.preventDefault(); break;
+          case 'KeyA': control.a = 1; e.preventDefault(); break;
+          case 'KeyS': control.s = 1; e.preventDefault(); break;
+          case 'KeyD': control.d = 1; e.preventDefault(); break;
+          case 'KeyQ': control.q = 1; e.preventDefault(); break;
+          case 'KeyE': control.e = 1; e.preventDefault(); break;
+          case 'KeyI': inventoryVisible = !inventoryVisible; 
+                      document.getElementById('inventory-panel').className = inventoryVisible ? 'visible' : ''; 
+                      e.preventDefault(); break;
+          case 'Digit1': inventory.selectedHotbar = 0; updateInventoryUI(); break;
+          case 'Digit2': inventory.selectedHotbar = 1; updateInventoryUI(); break;
+          case 'Digit3': inventory.selectedHotbar = 2; updateInventoryUI(); break;
+          case 'Digit4': inventory.selectedHotbar = 3; updateInventoryUI(); break;
+          case 'Digit5': inventory.selectedHotbar = 4; updateInventoryUI(); break;
+          case 'Digit6': inventory.selectedHotbar = 5; updateInventoryUI(); break;
+          case 'Digit7': inventory.selectedHotbar = 6; updateInventoryUI(); break;
+          case 'Digit8': inventory.selectedHotbar = 7; updateInventoryUI(); break;
+        }
+      });
       
-      for (const [key, chunk] of chunks) {
-        if (!newActiveChunks.has(key) && chunk.meshGroup.parent) {
-          chunk.hide();
+      window.addEventListener('keyup', e => {
+        switch(e.code) {
+          case 'KeyW': control.w = 0; e.preventDefault(); break;
+          case 'KeyA': control.a = 0; e.preventDefault(); break;
+          case 'KeyS': control.s = 0; e.preventDefault(); break;
+          case 'KeyD': control.d = 0; e.preventDefault(); break;
+          case 'KeyQ': control.q = 0; e.preventDefault(); break;
+          case 'KeyE': control.e = 0; e.preventDefault(); break;
+        }
+      });
+
+      // Мышь
+      renderer.domElement.addEventListener('click', () => renderer.domElement.requestPointerLock());
+      
+      document.addEventListener('mousemove', e => {
+        if (document.pointerLockElement === renderer.domElement) {
+          yaw -= e.movementX * 0.002;
+          pitch -= e.movementY * 0.002;
+          pitch = Math.max(-1.5, Math.min(1.5, pitch));
+        }
+      });
+
+      // Рейкаст
+      const raycaster = new THREE.Raycaster();
+      const rayDir = new THREE.Vector3();
+
+      function breakBlock() {
+        rayDir.copy(camera.getWorldDirection(rayDir));
+        raycaster.set(camera.position, rayDir);
+        const hits = raycaster.intersectObjects(scene.children, true);
+        for (let h of hits) {
+          if (h.object.userData.type) {
+            const { x, y, z } = h.object.position;
+            const cx = Math.floor(x / CHUNK_SIZE);
+            const cz = Math.floor(z / CHUNK_SIZE);
+            const chunk = chunks.get(getChunkKey(cx, cz));
+            if (chunk) {
+              const type = h.object.userData.type;
+              chunk.removeBlock(x, y, z);
+              addItemToHotbar(type);
+            }
+            return;
+          }
         }
       }
-      
-      activeChunks = newActiveChunks;
-      document.getElementById('chunk-info').innerHTML = 
-        `Чанк: ${playerChunkX},${playerChunkZ} | Блоков: ${totalBlocks}`;
-    }
 
-    // ==================== РЕЙКАСТ ДЛЯ ЛОМАНИЯ/СТАВКИ ====================
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    const direction = new THREE.Vector3();
-    
-    function getBlockInSight() {
-      raycaster.set(camera.position, direction.copy(camera.getWorldDirection(new THREE.Vector3())).normalize());
-      const intersects = raycaster.intersectObjects(scene.children, true);
-      
-      for (let intersect of intersects) {
-        if (intersect.object.userData.block) {
-          const block = intersect.object.userData.block;
-          return {
-            block,
-            face: intersect.face.normal,
-            point: intersect.point,
-            object: intersect.object
-          };
+      function placeBlock() {
+        const cur = getCurrentItem();
+        if (!cur?.item || !Registry.items[cur.item]?.blockId) return;
+        
+        rayDir.copy(camera.getWorldDirection(rayDir));
+        raycaster.set(camera.position, rayDir);
+        const hits = raycaster.intersectObjects(scene.children, true);
+        for (let h of hits) {
+          if (h.object.userData.type) {
+            const { x, y, z } = h.object.position;
+            const normal = h.face.normal;
+            const nx = x + (normal.x > 0 ? 1 : normal.x < 0 ? -1 : 0);
+            const ny = y + (normal.y > 0 ? 1 : normal.y < 0 ? -1 : 0);
+            const nz = z + (normal.z > 0 ? 1 : normal.z < 0 ? -1 : 0);
+            
+            const cx = Math.floor(nx / CHUNK_SIZE);
+            const cz = Math.floor(nz / CHUNK_SIZE);
+            const chunk = chunks.get(getChunkKey(cx, cz));
+            if (chunk && !chunk.blocks.has(`${nx},${ny},${nz}`)) {
+              chunk.addBlock(nx, ny, nz, cur.item);
+              useCurrentItem();
+            }
+            return;
+          }
         }
       }
-      return null;
-    }
-    
-    // Ломание блока
-    function breakBlock() {
-      const hit = getBlockInSight();
-      if (hit && hit.block) {
-        const { x, y, z } = hit.block.mesh.position;
-        const chunkX = Math.floor(x / CHUNK_SIZE);
-        const chunkZ = Math.floor(z / CHUNK_SIZE);
-        const chunk = chunks.get(getChunkKey(chunkX, chunkZ));
-        
-        if (chunk) {
-          // Добавляем предмет в инвентарь
-          addItem(hit.block.type, 1);
-          
-          // Удаляем блок
-          chunk.setBlock(x, y, z, null);
+
+      document.addEventListener('mousedown', e => {
+        if (document.pointerLockElement === renderer.domElement) {
+          if (e.button === 0) breakBlock();
+          else if (e.button === 2) placeBlock();
         }
-      }
-    }
-    
-    // Ставка блока
-    function placeBlock() {
-      const currentItem = getCurrentItem();
-      if (!currentItem || !currentItem.item || currentItem.count <= 0) return;
+      });
       
-      const item = Registry.items[currentItem.item];
-      if (!item || item.type !== 'block') return;
+      document.addEventListener('contextmenu', e => e.preventDefault());
+
+      // Джойстик (упрощенно)
+      const jArea = document.getElementById('joystick-area');
+      const jHandle = document.getElementById('joystick-handle');
+      let jActive = false, jId = null, cId = null, lastX = null, lastY = null;
       
-      const hit = getBlockInSight();
-      if (hit && hit.block) {
-        const { x, y, z } = hit.block.mesh.position;
-        const face = hit.face;
-        
-        let newX = x, newY = y, newZ = z;
-        
-        // Определяем позицию нового блока
-        if (face.x > 0.5) newX += 1;
-        else if (face.x < -0.5) newX -= 1;
-        else if (face.y > 0.5) newY += 1;
-        else if (face.y < -0.5) newY -= 1;
-        else if (face.z > 0.5) newZ += 1;
-        else if (face.z < -0.5) newZ -= 1;
-        
-        const chunkX = Math.floor(newX / CHUNK_SIZE);
-        const chunkZ = Math.floor(newZ / CHUNK_SIZE);
-        const chunk = chunks.get(getChunkKey(chunkX, chunkZ));
-        
-        if (chunk && !chunk.getBlock(newX, newY, newZ)) {
-          chunk.setBlock(newX, newY, newZ, item.blockId);
-          useCurrentItem();
+      jArea.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const t = e.touches[0];
+        jActive = true; jId = t.identifier;
+      });
+      
+      jArea.addEventListener('touchmove', e => {
+        e.preventDefault();
+        if (!jActive) return;
+        for (let t of e.touches) {
+          if (t.identifier === jId) {
+            const rect = jArea.getBoundingClientRect();
+            const cx = rect.left + rect.width/2;
+            const cy = rect.top + rect.height/2;
+            let dx = t.clientX - cx;
+            let dy = t.clientY - cy;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > 40) { dx = (dx/dist)*40; dy = (dy/dist)*40; }
+            jHandle.style.transform = `translate(${dx}px, ${dy}px)`;
+            control.mx = dx/40;
+            control.my = -dy/40;
+            return;
+          }
         }
-      }
-    }
-    
-    // ==================== УПРАВЛЕНИЕ ====================
-    const controlState = {
-      w: false, a: false, s: false, d: false,
-      q: false, e: false,
-      moveForward: 0,
-      moveRight: 0,
-      flyUp: false,
-      flyDown: false
-    };
+      });
+      
+      jArea.addEventListener('touchend', e => {
+        e.preventDefault();
+        jActive = false; jId = null;
+        jHandle.style.transform = 'translate(0px, 0px)';
+        control.mx = 0; control.my = 0;
+      });
 
-    // ПК управление
-    window.addEventListener('keydown', (e) => {
-      switch(e.code) {
-        case 'KeyW': controlState.w = true; e.preventDefault(); break;
-        case 'KeyA': controlState.a = true; e.preventDefault(); break;
-        case 'KeyS': controlState.s = true; e.preventDefault(); break;
-        case 'KeyD': controlState.d = true; e.preventDefault(); break;
-        case 'KeyQ': controlState.q = true; e.preventDefault(); break;
-        case 'KeyE': controlState.e = true; e.preventDefault(); break;
-        case 'KeyI': 
-          inventoryVisible = !inventoryVisible;
-          document.getElementById('inventory-panel').className = inventoryVisible ? 'visible' : '';
-          e.preventDefault();
-          break;
-        case 'Digit1': inventory.selectedHotbar = 0; updateInventoryUI(); break;
-        case 'Digit2': inventory.selectedHotbar = 1; updateInventoryUI(); break;
-        case 'Digit3': inventory.selectedHotbar = 2; updateInventoryUI(); break;
-        case 'Digit4': inventory.selectedHotbar = 3; updateInventoryUI(); break;
-        case 'Digit5': inventory.selectedHotbar = 4; updateInventoryUI(); break;
-        case 'Digit6': inventory.selectedHotbar = 5; updateInventoryUI(); break;
-        case 'Digit7': inventory.selectedHotbar = 6; updateInventoryUI(); break;
-        case 'Digit8': inventory.selectedHotbar = 7; updateInventoryUI(); break;
-      }
-    });
-
-    window.addEventListener('keyup', (e) => {
-      switch(e.code) {
-        case 'KeyW': controlState.w = false; e.preventDefault(); break;
-        case 'KeyA': controlState.a = false; e.preventDefault(); break;
-        case 'KeyS': controlState.s = false; e.preventDefault(); break;
-        case 'KeyD': controlState.d = false; e.preventDefault(); break;
-        case 'KeyQ': controlState.q = false; e.preventDefault(); break;
-        case 'KeyE': controlState.e = false; e.preventDefault(); break;
-      }
-    });
-
-    // Мышь
-    renderer.domElement.addEventListener('click', () => {
-      renderer.domElement.requestPointerLock();
-    });
-
-    document.addEventListener('mousedown', (e) => {
-      if (document.pointerLockElement === renderer.domElement) {
-        if (e.button === 0) { // ЛКМ
-          breakBlock();
-        } else if (e.button === 2) { // ПКМ
-          placeBlock();
+      document.addEventListener('touchstart', e => {
+        e.preventDefault();
+        for (let t of e.touches) {
+          const el = document.elementFromPoint(t.clientX, t.clientY);
+          if (el?.className === 'flight-btn') {
+            if (el.id === 'btn-up') control.flyUp = 1;
+            if (el.id === 'btn-down') control.flyDown = 1;
+          } else if (!el?.closest('#joystick-area') && cId === null) {
+            cId = t.identifier;
+            lastX = t.clientX; lastY = t.clientY;
+          }
         }
-      }
-    });
+      });
 
-    document.addEventListener('mousemove', (e) => {
-      if (document.pointerLockElement === renderer.domElement) {
-        yaw -= e.movementX * mouseSensitivity;
-        pitch -= e.movementY * mouseSensitivity;
-        pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+      document.addEventListener('touchmove', e => {
+        e.preventDefault();
+        for (let t of e.touches) {
+          if (t.identifier === cId && lastX && lastY) {
+            yaw -= (t.clientX - lastX) * 0.005;
+            pitch -= (t.clientY - lastY) * 0.005;
+            pitch = Math.max(-1.5, Math.min(1.5, pitch));
+            lastX = t.clientX; lastY = t.clientY;
+            return;
+          }
+        }
+      });
+
+      document.addEventListener('touchend', e => {
+        e.preventDefault();
+        if (cId) {
+          let found = false;
+          for (let t of e.touches) if (t.identifier === cId) { found = true; break; }
+          if (!found) { cId = null; lastX = null; lastY = null; }
+        }
+        control.flyUp = 0; control.flyDown = 0;
+      });
+
+      // ==================== ДВИЖЕНИЕ ====================
+      function move() {
+        const dir = getVec().copy(camera.getWorldDirection(getVec()));
+        const horiz = getVec().set(dir.x, 0, dir.z).normalize();
+        const right = getVec().set(dir.z, 0, -dir.x).normalize();
+        
+        let moved = false;
+        const ox = camera.position.x, oz = camera.position.z;
+        
+        if (control.w || control.s || control.a || control.d || control.mx || control.my) {
+          if (control.w || control.s) {
+            camera.position.addScaledVector(horiz, (control.w - control.s) * speed);
+            moved = true;
+          }
+          if (control.a || control.d) {
+            camera.position.addScaledVector(right, (control.d - control.a) * speed);
+            moved = true;
+          }
+          if (control.mx || control.my) {
+            camera.position.addScaledVector(right, control.mx * speed);
+            camera.position.addScaledVector(horiz, control.my * speed);
+            moved = true;
+          }
+        }
+        
+        if (control.q || control.e || control.flyUp || control.flyDown) {
+          camera.position.y += (control.e - control.q + control.flyUp - control.flyDown) * speed;
+        }
+        
+        if (moved) {
+          const ncx = Math.floor(camera.position.x / CHUNK_SIZE);
+          const ncz = Math.floor(camera.position.z / CHUNK_SIZE);
+          if (ncx !== Math.floor(ox / CHUNK_SIZE) || ncz !== Math.floor(oz / CHUNK_SIZE)) {
+            updateChunks();
+          }
+        }
+        
+        freeVec(dir); freeVec(horiz); freeVec(right);
+      }
+
+      // ==================== ОСВЕЩЕНИЕ ====================
+      scene.add(new THREE.AmbientLight(0x404060));
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(10, 20, 10);
+      scene.add(light);
+
+      // ==================== СТАРТ ====================
+      updateChunks();
+      updateInventoryUI();
+
+      document.getElementById('save-button').onclick = () => {
+        localStorage.setItem('pos', JSON.stringify(camera.position));
+        localStorage.setItem('inv', JSON.stringify(inventory));
+        document.getElementById('save-button').innerHTML = '✅';
+        setTimeout(() => document.getElementById('save-button').innerHTML = '💾', 1000);
+      };
+      
+      document.getElementById('inventory-toggle').onclick = () => {
+        inventoryVisible = !inventoryVisible;
+        document.getElementById('inventory-panel').className = inventoryVisible ? 'visible' : '';
+      };
+
+      // Рендер с ограничением FPS
+      function render(now) {
+        requestAnimationFrame(render);
+        if (now - lastFrame < 1000/fpsLimit) return;
+        lastFrame = now;
+        
         camera.rotation.order = 'YXZ';
         camera.rotation.set(pitch, yaw, 0);
-      }
-    });
-
-    // Запрет контекстного меню
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-    // Параметры камеры
-    let pitch = -0.3;
-    let yaw = 0.8;
-    const mouseSensitivity = 0.002;
-    
-    camera.rotation.order = 'YXZ';
-    camera.rotation.set(pitch, yaw, 0);
-
-    // Джойстик и мобильное управление (как в предыдущей версии)
-    let joystickTouch = null;
-    let cameraTouch = null;
-    let lastTouchX = null;
-    let lastTouchY = null;
-    
-    const joystickArea = document.getElementById('joystick-area');
-    const joystickHandle = document.getElementById('joystick-handle');
-    const joystickMaxDist = 40;
-    let joystickCenter = { x: 0, y: 0 };
-    const touchSensitivity = 0.005;
-
-    function updateJoystickCenter() {
-      const rect = joystickArea.getBoundingClientRect();
-      joystickCenter.x = rect.left + rect.width / 2;
-      joystickCenter.y = rect.top + rect.height / 2;
-    }
-    
-    window.addEventListener('resize', updateJoystickCenter);
-    updateJoystickCenter();
-
-    // Мобильные события
-    document.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      
-      for (let i = 0; i < e.touches.length; i++) {
-        const touch = e.touches[i];
-        const element = document.elementFromPoint(touch.clientX, touch.clientY);
         
-        if (element && element.className === 'flight-btn') {
-          if (element.id === 'btn-up') controlState.flyUp = true;
-          else if (element.id === 'btn-down') controlState.flyDown = true;
-          continue;
-        }
-        
-        if (element && element.id === 'joystick-area') {
-          if (joystickTouch === null) {
-            joystickTouch = touch.identifier;
-            const deltaX = touch.clientX - joystickCenter.x;
-            const deltaY = touch.clientY - joystickCenter.y;
-            
-            const dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-            if (dist > joystickMaxDist) {
-              deltaX = (deltaX / dist) * joystickMaxDist;
-              deltaY = (deltaY / dist) * joystickMaxDist;
-            }
-            
-            joystickHandle.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-            controlState.moveForward = -(deltaY / joystickMaxDist);
-            controlState.moveRight = deltaX / joystickMaxDist;
-          }
-          continue;
-        }
-        
-        if (cameraTouch === null) {
-          cameraTouch = touch.identifier;
-          lastTouchX = touch.clientX;
-          lastTouchY = touch.clientY;
-        }
+        move();
+        renderer.render(scene, camera);
       }
-    }, { passive: false });
-
-    document.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      
-      if (joystickTouch !== null) {
-        for (let i = 0; i < e.touches.length; i++) {
-          const touch = e.touches[i];
-          if (touch.identifier === joystickTouch) {
-            const deltaX = touch.clientX - joystickCenter.x;
-            const deltaY = touch.clientY - joystickCenter.y;
-            
-            const dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-            let limitedDeltaX = deltaX;
-            let limitedDeltaY = deltaY;
-            
-            if (dist > joystickMaxDist) {
-              limitedDeltaX = (deltaX / dist) * joystickMaxDist;
-              limitedDeltaY = (deltaY / dist) * joystickMaxDist;
-            }
-            
-            joystickHandle.style.transform = `translate(${limitedDeltaX}px, ${limitedDeltaY}px)`;
-            controlState.moveForward = -(limitedDeltaY / joystickMaxDist);
-            controlState.moveRight = limitedDeltaX / joystickMaxDist;
-            break;
-          }
-        }
-      }
-      
-      if (cameraTouch !== null && lastTouchX !== null && lastTouchY !== null) {
-        for (let i = 0; i < e.touches.length; i++) {
-          const touch = e.touches[i];
-          if (touch.identifier === cameraTouch) {
-            const deltaX = touch.clientX - lastTouchX;
-            const deltaY = touch.clientY - lastTouchY;
-            
-            yaw -= deltaX * touchSensitivity;
-            pitch -= deltaY * touchSensitivity;
-            pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
-            
-            camera.rotation.order = 'YXZ';
-            camera.rotation.set(pitch, yaw, 0);
-            
-            lastTouchX = touch.clientX;
-            lastTouchY = touch.clientY;
-            break;
-          }
-        }
-      }
-    }, { passive: false });
-
-    document.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      
-      if (joystickTouch !== null) {
-        let found = false;
-        for (let i = 0; i < e.touches.length; i++) {
-          if (e.touches[i].identifier === joystickTouch) { found = true; break; }
-        }
-        if (!found) {
-          joystickTouch = null;
-          joystickHandle.style.transform = 'translate(0px, 0px)';
-          controlState.moveForward = 0;
-          controlState.moveRight = 0;
-        }
-      }
-      
-      if (cameraTouch !== null) {
-        let found = false;
-        for (let i = 0; i < e.touches.length; i++) {
-          if (e.touches[i].identifier === cameraTouch) { found = true; break; }
-        }
-        if (!found) {
-          cameraTouch = null;
-          lastTouchX = null;
-          lastTouchY = null;
-        }
-      }
-      
-      let flyUpStillPressed = false;
-      let flyDownStillPressed = false;
-      for (let i = 0; i < e.touches.length; i++) {
-        const touch = e.touches[i];
-        const element = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (element && element.className === 'flight-btn') {
-          if (element.id === 'btn-up') flyUpStillPressed = true;
-          if (element.id === 'btn-down') flyDownStillPressed = true;
-        }
-      }
-      controlState.flyUp = flyUpStillPressed;
-      controlState.flyDown = flyDownStillPressed;
-    }, { passive: false });
-
-    // Движение
-    const moveSpeed = 0.3;
-
-    function updateCamera() {
-      const direction = new THREE.Vector3(0, 0, -1);
-      direction.applyEuler(camera.rotation);
-      
-      const horizontalDir = direction.clone();
-      horizontalDir.y = 0;
-      horizontalDir.normalize();
-      
-      const right = new THREE.Vector3(1, 0, 0);
-      right.applyEuler(camera.rotation);
-      right.y = 0;
-      right.normalize();
-      
-      let moved = false;
-      const oldX = camera.position.x;
-      const oldZ = camera.position.z;
-      
-      if (controlState.w) { camera.position.addScaledVector(horizontalDir, moveSpeed); moved = true; }
-      if (controlState.s) { camera.position.addScaledVector(horizontalDir, -moveSpeed); moved = true; }
-      if (controlState.d) { camera.position.addScaledVector(right, moveSpeed); moved = true; }
-      if (controlState.a) { camera.position.addScaledVector(right, -moveSpeed); moved = true; }
-      
-      if (controlState.q) camera.position.y -= moveSpeed;
-      if (controlState.e) camera.position.y += moveSpeed;
-      
-      if (controlState.moveForward !== 0) {
-        camera.position.addScaledVector(horizontalDir, controlState.moveForward * moveSpeed);
-        moved = true;
-      }
-      if (controlState.moveRight !== 0) {
-        camera.position.addScaledVector(right, controlState.moveRight * moveSpeed);
-        moved = true;
-      }
-      
-      if (controlState.flyDown) camera.position.y -= moveSpeed;
-      if (controlState.flyUp) camera.position.y += moveSpeed;
-      
-      if (moved) {
-        const newChunkX = Math.floor(camera.position.x / CHUNK_SIZE);
-        const newChunkZ = Math.floor(camera.position.z / CHUNK_SIZE);
-        const oldChunkX = Math.floor(oldX / CHUNK_SIZE);
-        const oldChunkZ = Math.floor(oldZ / CHUNK_SIZE);
-        
-        if (newChunkX !== oldChunkX || newChunkZ !== oldChunkZ) {
-          updateChunks();
-        }
-      }
-    }
-
-    // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-    
-    // Свет
-    const ambientLight = new THREE.AmbientLight(0x404060);
-    scene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(10, 20, 10);
-    scene.add(directionalLight);
-
-    // Запуск
-    updateChunks();
-    updateInventoryUI();
-
-    // Рендер
-    function render() {
       requestAnimationFrame(render);
-      updateCamera();
-      renderer.render(scene, camera);
-    }
-    render();
 
-    // События
-    window.addEventListener("resize", () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      updateJoystickCenter();
-    });
-
-    document.getElementById('save-button').addEventListener('click', saveWorld);
-    document.getElementById('inventory-toggle').addEventListener('click', () => {
-      inventoryVisible = !inventoryVisible;
-      document.getElementById('inventory-panel').className = inventoryVisible ? 'visible' : '';
-    });
-
-    // Автосохранение
-    setInterval(saveWorld, 30000);
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    })();
   </script>
 </body>
 </html>
