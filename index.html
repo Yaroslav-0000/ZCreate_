@@ -2,225 +2,492 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>ZCreate Registry World</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ZCreate</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { 
+      margin: 0; 
+      overflow: hidden; 
+      font-family: Arial, sans-serif;
+      touch-action: none;
+    }
+    #joystick-area {
+      position: absolute;
+      bottom: 30px;
+      left: 30px;
+      width: 120px;
+      height: 120px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 60px;
+      backdrop-filter: blur(5px);
+      border: 2px solid rgba(255,255,255,0.3);
+      z-index: 20;
+    }
+    #joystick-handle {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: rgba(255,255,255,0.8);
+      border-radius: 25px;
+      top: 35px;
+      left: 35px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      pointer-events: none;
+    }
+    #flight-buttons {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      z-index: 20;
+    }
+    .flight-btn {
+      width: 70px;
+      height: 70px;
+      background: rgba(0,0,0,0.6);
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 35px;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+      user-select: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .flight-btn:active {
+      background: rgba(100,100,255,0.8);
+      transform: scale(0.95);
+    }
+    canvas {
+      touch-action: none;
+      display: block;
+    }
+    #debug {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0,0,0,0.7);
+      padding: 5px;
+      font-size: 12px;
+      z-index: 100;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-<script>
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-  const renderer = new THREE.WebGLRenderer({ antialias:true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
-
-  camera.position.set(15, 10, 15);
+  <div id="debug">Касаний: 0 | Джойстик: нет | Камера: нет</div>
   
-  // --- Объект для состояния клавиш ---
-  const keyState = {
-    w: false, a: false, s: false, d: false,
-    q: false, e: false, shift: false, space: false
-  };
+  <div id="joystick-area">
+    <div id="joystick-handle"></div>
+  </div>
+  
+  <div id="flight-buttons">
+    <div class="flight-btn" id="btn-up">⬆️</div>
+    <div class="flight-btn" id="btn-down">⬇️</div>
+  </div>
 
-  // --- Обработка нажатий клавиш ---
-  window.addEventListener('keydown', (e) => {
-    switch(e.code) {
-      case 'KeyW': keyState.w = true; e.preventDefault(); break;
-      case 'KeyA': keyState.a = true; e.preventDefault(); break;
-      case 'KeyS': keyState.s = true; e.preventDefault(); break;
-      case 'KeyD': keyState.d = true; e.preventDefault(); break;
-      case 'KeyQ': keyState.q = true; e.preventDefault(); break;
-      case 'KeyE': keyState.e = true; e.preventDefault(); break;
-      case 'ShiftLeft': keyState.shift = true; e.preventDefault(); break;
-      case 'Space': keyState.space = true; e.preventDefault(); break;
-    }
-  });
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-  window.addEventListener('keyup', (e) => {
-    switch(e.code) {
-      case 'KeyW': keyState.w = false; e.preventDefault(); break;
-      case 'KeyA': keyState.a = false; e.preventDefault(); break;
-      case 'KeyS': keyState.s = false; e.preventDefault(); break;
-      case 'KeyD': keyState.d = false; e.preventDefault(); break;
-      case 'KeyQ': keyState.q = false; e.preventDefault(); break;
-      case 'KeyE': keyState.e = false; e.preventDefault(); break;
-      case 'ShiftLeft': keyState.shift = false; e.preventDefault(); break;
-      case 'Space': keyState.space = false; e.preventDefault(); break;
-    }
-  });
-
-  // --- Управление мышью (как в шутерах) ---
-  let pitch = 0; // вращение вверх-вниз
-  let yaw = 0;   // вращение влево-вправо
-  const mouseSensitivity = 0.002;
-
-  document.addEventListener('mousemove', (e) => {
-    if (document.pointerLockElement === renderer.domElement) {
-      // Горизонтальное движение мыши = поворот влево-вправо (yaw)
-      yaw -= e.movementX * mouseSensitivity;
-      
-      // Вертикальное движение мыши = поворот вверх-вниз (pitch)
-      pitch -= e.movementY * mouseSensitivity;
-      
-      // Ограничиваем pitch, чтобы не улететь в бесконечность (от -90° до +90°)
-      pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
-      
-      // Применяем повороты к камере
-      camera.rotation.order = 'YXZ'; // важно: сначала Y (yaw), потом X (pitch)
-      camera.rotation.set(pitch, yaw, 0);
-    }
-  });
-
-  // --- Блокировка мыши при клике ---
-  renderer.domElement.addEventListener('click', () => {
-    renderer.domElement.requestPointerLock();
-  });
-
-  // --- Скорость движения ---
-  const moveSpeed = 0.5;
-
-  // --- Функция обновления камеры ---
-  function updateCamera() {
-    // Получаем направление взгляда камеры
-    const direction = new THREE.Vector3(0, 0, -1);
-    direction.applyEuler(camera.rotation);
-    
-    // Для горизонтального движения берем направление без вертикальной составляющей
-    const horizontalDir = direction.clone();
-    horizontalDir.y = 0;
-    horizontalDir.normalize();
-    
-    // Вектор вправо (перпендикулярно направлению и вертикальной оси)
-    const right = new THREE.Vector3(1, 0, 0);
-    right.applyEuler(camera.rotation);
-    right.y = 0;
-    right.normalize();
-    
-    // Движение WASD
-    if (keyState.w) camera.position.addScaledVector(horizontalDir, moveSpeed);
-    if (keyState.s) camera.position.addScaledVector(horizontalDir, -moveSpeed);
-    if (keyState.d) camera.position.addScaledVector(right, moveSpeed);
-    if (keyState.a) camera.position.addScaledVector(right, -moveSpeed);
-    
-    // Вертикальное движение (Q/E, Shift/Space)
-    if (keyState.q || keyState.shift) camera.position.y -= moveSpeed; // вниз
-    if (keyState.e || keyState.space) camera.position.y += moveSpeed; // вверх
-  }
-
-  // --- Реестр ---
-  const RegistryData = {
-    Block: {},
-    Item: {},
-    Entity: {},
-    Other: {}
-  };
-
-  function Registry(category, options) {
-    if (!RegistryData[category]) {
-      console.warn("Неизвестная категория:", category);
-      return;
-    }
-
-    const faces = {};
-    for (let side of ["top","bottom","left","right","front","back"]) {
-      if (options.textures && options.textures[side]) {
-        let tex = loader.load(`textures/${options.textures[side]}`);
-        tex.magFilter = THREE.NearestFilter;
-        tex.minFilter = THREE.NearestFilter;
-        tex.generateMipmaps = false;
-        faces[side] = tex;
-      }
-    }
-
-    RegistryData[category][options.id] = { ...options, textures: faces };
-  }
-
-  const loader = new THREE.TextureLoader();
-
-  // Регистрируем блоки
-  Registry("Block", {
-    id: "stone",
-    textures: { top:"top.png", bottom:"top.png", left:"top.png", right:"top.png", front:"top.png", back:"top.png" },
-    hardness: 5
-  });
-
-  Registry("Block", {
-    id: "grass",
-    textures: { top:"top.png", bottom:"top.png", left:"top.png", right:"top.png", front:"grass_side.png", back:"grass_side.png" },
-    hardness: 2
-  });
-
-  Registry("Block", {
-    id: "dirt",
-    textures: { top:"dirt.png", bottom:"dirt.png", left:"dirt.png", right:"dirt.png", front:"dirt.png", back:"dirt.png" },
-    hardness: 1
-  });
-
-  // --- Класс блока ---
-  class Block {
-    constructor(type, x, y, z) {
-      this.type = type;
-      this.data = {};
-      this.mesh = this.createMesh();
-      this.mesh.position.set(x, y, z);
-    }
-
-    createMesh() {
-      const reg = RegistryData.Block[this.type];
-      if (!reg) return new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({visible:false}));
-
-      const materials = [
-        new THREE.MeshBasicMaterial({ map: reg.textures.right }),
-        new THREE.MeshBasicMaterial({ map: reg.textures.left }),
-        new THREE.MeshBasicMaterial({ map: reg.textures.top }),
-        new THREE.MeshBasicMaterial({ map: reg.textures.bottom }),
-        new THREE.MeshBasicMaterial({ map: reg.textures.front }),
-        new THREE.MeshBasicMaterial({ map: reg.textures.back })
-      ];
-      return new THREE.Mesh(new THREE.BoxGeometry(1,1,1), materials);
-    }
-  }
-
-  // --- Генерация мира ---
-  const sizeX = 10, sizeY = 5, sizeZ = 10;
-  let world = [];
-
-  for (let x = 0; x < sizeX; x++) {
-    world[x] = [];
-    for (let y = 0; y < sizeY; y++) {
-      world[x][y] = [];
-      for (let z = 0; z < sizeZ; z++) {
-        let types = ["stone","grass","dirt","air"];
-        let type = types[Math.floor(Math.random()*types.length)];
-        let block = new Block(type, x, y, z);
-        world[x][y][z] = block;
-        if (type !== "air") scene.add(block.mesh);
-      }
-    }
-  }
-
-  // Добавляем свет
-  const ambientLight = new THREE.AmbientLight(0x404060);
-  scene.add(ambientLight);
-
-  // Функция рендера
-  function render() {
-    requestAnimationFrame(render);
-    
-    updateCamera();
-    
-    renderer.render(scene, camera);
-  }
-  render();
-
-  window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-</script>
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.body.appendChild(renderer.domElement);
+
+    camera.position.set(15, 10, 15);
+    
+    // --- Состояние управления ---
+    const controlState = {
+      moveForward: 0,
+      moveRight: 0,
+      flyUp: false,
+      flyDown: false
+    };
+
+    // --- Переменные для мультитач ---
+    let joystickTouch = null; // ID касания джойстика
+    let cameraTouch = null;   // ID касания камеры
+    let lastTouchX = null;
+    let lastTouchY = null;
+    
+    // Параметры джойстика
+    const joystickArea = document.getElementById('joystick-area');
+    const joystickHandle = document.getElementById('joystick-handle');
+    const joystickMaxDist = 40;
+    let joystickCenter = { x: 0, y: 0 };
+    
+    // Параметры камеры
+    let pitch = 0;
+    let yaw = 0;
+    const touchSensitivity = 0.005;
+
+    // Обновляем центр джойстика при изменении размеров
+    function updateJoystickCenter() {
+      const rect = joystickArea.getBoundingClientRect();
+      joystickCenter.x = rect.left + rect.width / 2;
+      joystickCenter.y = rect.top + rect.height / 2;
+    }
+    
+    window.addEventListener('resize', updateJoystickCenter);
+    updateJoystickCenter();
+
+    // --- ГЛАВНЫЙ ОБРАБОТЧИК ВСЕХ КАСАНИЙ ---
+    document.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      
+      const debug = document.getElementById('debug');
+      
+      // Обрабатываем каждое касание
+      for (let i = 0; i < e.touches.length; i++) {
+        const touch = e.touches[i];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        // Проверяем, не нажали ли на кнопку полета
+        if (element && element.className === 'flight-btn') {
+          if (element.id === 'btn-up') {
+            controlState.flyUp = true;
+          } else if (element.id === 'btn-down') {
+            controlState.flyDown = true;
+          }
+          continue;
+        }
+        
+        // Проверяем, не нажали ли на джойстик
+        if (element && element.id === 'joystick-area') {
+          if (joystickTouch === null) {
+            joystickTouch = touch.identifier;
+            
+            // Сразу обновляем позицию джойстика
+            const deltaX = touch.clientX - joystickCenter.x;
+            const deltaY = touch.clientY - joystickCenter.y;
+            
+            const dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+            if (dist > joystickMaxDist) {
+              deltaX = (deltaX / dist) * joystickMaxDist;
+              deltaY = (deltaY / dist) * joystickMaxDist;
+            }
+            
+            joystickHandle.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            
+            controlState.moveForward = -(deltaY / joystickMaxDist);
+            controlState.moveRight = deltaX / joystickMaxDist;
+          }
+          continue;
+        }
+        
+        // Иначе это касание для поворота камеры
+        if (cameraTouch === null) {
+          cameraTouch = touch.identifier;
+          lastTouchX = touch.clientX;
+          lastTouchY = touch.clientY;
+        }
+      }
+      
+      debug.innerHTML = `Касаний: ${e.touches.length} | Джойстик: ${joystickTouch !== null ? 'да' : 'нет'} | Камера: ${cameraTouch !== null ? 'да' : 'нет'}`;
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      
+      // Обрабатываем движение для джойстика
+      if (joystickTouch !== null) {
+        for (let i = 0; i < e.touches.length; i++) {
+          const touch = e.touches[i];
+          if (touch.identifier === joystickTouch) {
+            
+            const deltaX = touch.clientX - joystickCenter.x;
+            const deltaY = touch.clientY - joystickCenter.y;
+            
+            const dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+            let limitedDeltaX = deltaX;
+            let limitedDeltaY = deltaY;
+            
+            if (dist > joystickMaxDist) {
+              limitedDeltaX = (deltaX / dist) * joystickMaxDist;
+              limitedDeltaY = (deltaY / dist) * joystickMaxDist;
+            }
+            
+            joystickHandle.style.transform = `translate(${limitedDeltaX}px, ${limitedDeltaY}px)`;
+            
+            controlState.moveForward = -(limitedDeltaY / joystickMaxDist);
+            controlState.moveRight = limitedDeltaX / joystickMaxDist;
+            
+            break;
+          }
+        }
+      }
+      
+      // Обрабатываем движение для камеры
+      if (cameraTouch !== null && lastTouchX !== null && lastTouchY !== null) {
+        for (let i = 0; i < e.touches.length; i++) {
+          const touch = e.touches[i];
+          if (touch.identifier === cameraTouch) {
+            
+            const deltaX = touch.clientX - lastTouchX;
+            const deltaY = touch.clientY - lastTouchY;
+            
+            yaw -= deltaX * touchSensitivity;
+            pitch -= deltaY * touchSensitivity;
+            
+            pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+            
+            camera.rotation.order = 'YXZ';
+            camera.rotation.set(pitch, yaw, 0);
+            
+            lastTouchX = touch.clientX;
+            lastTouchY = touch.clientY;
+            
+            break;
+          }
+        }
+      }
+      
+      const debug = document.getElementById('debug');
+      debug.innerHTML = `Касаний: ${e.touches.length} | Джойстик: ${joystickTouch !== null ? 'да' : 'нет'} | Камера: ${cameraTouch !== null ? 'да' : 'нет'}`;
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      
+      // Проверяем, не убрали ли палец с джойстика
+      if (joystickTouch !== null) {
+        let found = false;
+        for (let i = 0; i < e.touches.length; i++) {
+          if (e.touches[i].identifier === joystickTouch) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          joystickTouch = null;
+          joystickHandle.style.transform = 'translate(0px, 0px)';
+          controlState.moveForward = 0;
+          controlState.moveRight = 0;
+        }
+      }
+      
+      // Проверяем, не убрали ли палец с камеры
+      if (cameraTouch !== null) {
+        let found = false;
+        for (let i = 0; i < e.touches.length; i++) {
+          if (e.touches[i].identifier === cameraTouch) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          cameraTouch = null;
+          lastTouchX = null;
+          lastTouchY = null;
+        }
+      }
+      
+      // Проверяем кнопки полета
+      let flyUpStillPressed = false;
+      let flyDownStillPressed = false;
+      
+      for (let i = 0; i < e.touches.length; i++) {
+        const touch = e.touches[i];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (element && element.className === 'flight-btn') {
+          if (element.id === 'btn-up') flyUpStillPressed = true;
+          if (element.id === 'btn-down') flyDownStillPressed = true;
+        }
+      }
+      
+      controlState.flyUp = flyUpStillPressed;
+      controlState.flyDown = flyDownStillPressed;
+      
+      const debug = document.getElementById('debug');
+      debug.innerHTML = `Касаний: ${e.touches.length} | Джойстик: ${joystickTouch !== null ? 'да' : 'нет'} | Камера: ${cameraTouch !== null ? 'да' : 'нет'}`;
+    }, { passive: false });
+
+    document.addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      
+      // Сбрасываем всё при отмене касаний
+      joystickTouch = null;
+      cameraTouch = null;
+      lastTouchX = null;
+      lastTouchY = null;
+      controlState.moveForward = 0;
+      controlState.moveRight = 0;
+      controlState.flyUp = false;
+      controlState.flyDown = false;
+      joystickHandle.style.transform = 'translate(0px, 0px)';
+      
+      const debug = document.getElementById('debug');
+      debug.innerHTML = `Касаний: ${e.touches.length} | Джойстик: нет | Камера: нет`;
+    }, { passive: false });
+
+    // --- Скорость движения ---
+    const moveSpeed = 0.5;
+
+    // --- Функция обновления камеры ---
+    function updateCamera() {
+      const direction = new THREE.Vector3(0, 0, -1);
+      direction.applyEuler(camera.rotation);
+      
+      const horizontalDir = direction.clone();
+      horizontalDir.y = 0;
+      horizontalDir.normalize();
+      
+      const right = new THREE.Vector3(1, 0, 0);
+      right.applyEuler(camera.rotation);
+      right.y = 0;
+      right.normalize();
+      
+      // Движение с джойстика
+      if (controlState.moveForward !== 0) {
+        camera.position.addScaledVector(horizontalDir, controlState.moveForward * moveSpeed);
+      }
+      if (controlState.moveRight !== 0) {
+        camera.position.addScaledVector(right, controlState.moveRight * moveSpeed);
+      }
+      
+      // Вертикальное движение (кнопки)
+      if (controlState.flyDown) camera.position.y -= moveSpeed;
+      if (controlState.flyUp) camera.position.y += moveSpeed;
+    }
+
+    // --- Реестр с текстурами ---
+    const RegistryData = {
+      Block: {}
+    };
+
+    function Registry(category, options) {
+      if (!RegistryData[category]) return;
+
+      const faces = {};
+      
+      if (options.textures) {
+        for (let side of ["top", "bottom", "left", "right", "front", "back"]) {
+          if (options.textures[side]) {
+            try {
+              let tex = loader.load(`textures/${options.textures[side]}`);
+              tex.magFilter = THREE.NearestFilter;
+              tex.minFilter = THREE.NearestFilter;
+              tex.generateMipmaps = false;
+              faces[side] = tex;
+            } catch (e) {
+              faces[side] = null;
+            }
+          } else {
+            faces[side] = null;
+          }
+        }
+      }
+
+      RegistryData[category][options.id] = { ...options, textures: faces };
+    }
+
+    const loader = new THREE.TextureLoader();
+
+    Registry("Block", {
+      id: "stone",
+      textures: { 
+        top: "top.png", 
+        bottom: "top.png", 
+        left: "top.png", 
+        right: "top.png", 
+        front: "top.png", 
+        back: "top.png" 
+      }
+    });
+
+    Registry("Block", {
+      id: "grass",
+      textures: { 
+        top: "grass_block_top.png", 
+        bottom: "grass_block_nop.png", 
+        left: "grass_block_side.png", 
+        right: "grass_block_side.png", 
+        front: "grass_block_side.png", 
+        back: "grass_block_side.png" 
+      }
+    });
+
+    Registry("Block", {
+      id: "dirt",
+      textures: { 
+        top: "top.png", 
+        bottom: "top.png", 
+        left: "top.png", 
+        right: "top.png", 
+        front: "dirt.png", 
+        back: "dirt.png" 
+      }
+    });
+
+    // --- Класс блока ---
+    class Block {
+      constructor(type, x, y, z) {
+        this.type = type;
+        this.mesh = this.createMesh();
+        this.mesh.position.set(x, y, z);
+      }
+
+      createMesh() {
+        const reg = RegistryData.Block[this.type];
+        if (!reg) return new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({visible:false}));
+
+        const materials = [
+          new THREE.MeshBasicMaterial({ map: reg.textures.right || null }),
+          new THREE.MeshBasicMaterial({ map: reg.textures.left || null }),
+          new THREE.MeshBasicMaterial({ map: reg.textures.top || null }),
+          new THREE.MeshBasicMaterial({ map: reg.textures.bottom || null }),
+          new THREE.MeshBasicMaterial({ map: reg.textures.front || null }),
+          new THREE.MeshBasicMaterial({ map: reg.textures.back || null })
+        ];
+
+        return new THREE.Mesh(new THREE.BoxGeometry(1,1,1), materials);
+      }
+    }
+
+    // --- Генерация мира ---
+    const sizeX = 20, sizeY = 10, sizeZ = 20;
+
+    for (let x = 0; x < sizeX; x++) {
+      for (let y = 0; y < sizeY; y++) {
+        for (let z = 0; z < sizeZ; z++) {
+          let types = ["stone", "grass", "dirt"];
+          let type = types[Math.floor(Math.random() * types.length)];
+          let block = new Block(type, x, y, z);
+          scene.add(block.mesh);
+        }
+      }
+    }
+
+    // Свет
+    const ambientLight = new THREE.AmbientLight(0x404060);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(10, 20, 10);
+    scene.add(directionalLight);
+
+    // Рендер
+    function render() {
+      requestAnimationFrame(render);
+      updateCamera();
+      renderer.render(scene, camera);
+    }
+    render();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      updateJoystickCenter();
+    });
+  </script>
 </body>
 </html>
