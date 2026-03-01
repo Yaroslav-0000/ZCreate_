@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>ZCreate Registry World</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+  </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  camera.position.set(15, 10, 15);
+  
+  // --- Объект для состояния клавиш ---
+  const keyState = {
+    w: false, a: false, s: false, d: false,
+    q: false, e: false, shift: false, space: false
+  };
+
+  // --- Обработка нажатий клавиш ---
+  window.addEventListener('keydown', (e) => {
+    switch(e.code) {
+      case 'KeyW': keyState.w = true; e.preventDefault(); break;
+      case 'KeyA': keyState.a = true; e.preventDefault(); break;
+      case 'KeyS': keyState.s = true; e.preventDefault(); break;
+      case 'KeyD': keyState.d = true; e.preventDefault(); break;
+      case 'KeyQ': keyState.q = true; e.preventDefault(); break;
+      case 'KeyE': keyState.e = true; e.preventDefault(); break;
+      case 'ShiftLeft': keyState.shift = true; e.preventDefault(); break;
+      case 'Space': keyState.space = true; e.preventDefault(); break;
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    switch(e.code) {
+      case 'KeyW': keyState.w = false; e.preventDefault(); break;
+      case 'KeyA': keyState.a = false; e.preventDefault(); break;
+      case 'KeyS': keyState.s = false; e.preventDefault(); break;
+      case 'KeyD': keyState.d = false; e.preventDefault(); break;
+      case 'KeyQ': keyState.q = false; e.preventDefault(); break;
+      case 'KeyE': keyState.e = false; e.preventDefault(); break;
+      case 'ShiftLeft': keyState.shift = false; e.preventDefault(); break;
+      case 'Space': keyState.space = false; e.preventDefault(); break;
+    }
+  });
+
+  // --- Управление мышью (как в шутерах) ---
+  let pitch = 0; // вращение вверх-вниз
+  let yaw = 0;   // вращение влево-вправо
+  const mouseSensitivity = 0.002;
+
+  document.addEventListener('mousemove', (e) => {
+    if (document.pointerLockElement === renderer.domElement) {
+      // Горизонтальное движение мыши = поворот влево-вправо (yaw)
+      yaw -= e.movementX * mouseSensitivity;
+      
+      // Вертикальное движение мыши = поворот вверх-вниз (pitch)
+      pitch -= e.movementY * mouseSensitivity;
+      
+      // Ограничиваем pitch, чтобы не улететь в бесконечность (от -90° до +90°)
+      pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+      
+      // Применяем повороты к камере
+      camera.rotation.order = 'YXZ'; // важно: сначала Y (yaw), потом X (pitch)
+      camera.rotation.set(pitch, yaw, 0);
+    }
+  });
+
+  // --- Блокировка мыши при клике ---
+  renderer.domElement.addEventListener('click', () => {
+    renderer.domElement.requestPointerLock();
+  });
+
+  // --- Скорость движения ---
+  const moveSpeed = 0.5;
+
+  // --- Функция обновления камеры ---
+  function updateCamera() {
+    // Получаем направление взгляда камеры
+    const direction = new THREE.Vector3(0, 0, -1);
+    direction.applyEuler(camera.rotation);
+    
+    // Для горизонтального движения берем направление без вертикальной составляющей
+    const horizontalDir = direction.clone();
+    horizontalDir.y = 0;
+    horizontalDir.normalize();
+    
+    // Вектор вправо (перпендикулярно направлению и вертикальной оси)
+    const right = new THREE.Vector3(1, 0, 0);
+    right.applyEuler(camera.rotation);
+    right.y = 0;
+    right.normalize();
+    
+    // Движение WASD
+    if (keyState.w) camera.position.addScaledVector(horizontalDir, moveSpeed);
+    if (keyState.s) camera.position.addScaledVector(horizontalDir, -moveSpeed);
+    if (keyState.d) camera.position.addScaledVector(right, moveSpeed);
+    if (keyState.a) camera.position.addScaledVector(right, -moveSpeed);
+    
+    // Вертикальное движение (Q/E, Shift/Space)
+    if (keyState.q || keyState.shift) camera.position.y -= moveSpeed; // вниз
+    if (keyState.e || keyState.space) camera.position.y += moveSpeed; // вверх
+  }
+
+  // --- Реестр ---
+  const RegistryData = {
+    Block: {},
+    Item: {},
+    Entity: {},
+    Other: {}
+  };
+
+  function Registry(category, options) {
+    if (!RegistryData[category]) {
+      console.warn("Неизвестная категория:", category);
+      return;
+    }
+
+    const faces = {};
+    for (let side of ["top","bottom","left","right","front","back"]) {
+      if (options.textures && options.textures[side]) {
+        let tex = loader.load(`textures/${options.textures[side]}`);
+        tex.magFilter = THREE.NearestFilter;
+        tex.minFilter = THREE.NearestFilter;
+        tex.generateMipmaps = false;
+        faces[side] = tex;
+      }
+    }
+
+    RegistryData[category][options.id] = { ...options, textures: faces };
+  }
+
+  const loader = new THREE.TextureLoader();
+
+  // Регистрируем блоки
+  Registry("Block", {
+    id: "stone",
+    textures: { top:"top.png", bottom:"top.png", left:"top.png", right:"top.png", front:"top.png", back:"top.png" },
+    hardness: 5
+  });
+
+  Registry("Block", {
+    id: "grass",
+    textures: { top:"top.png", bottom:"top.png", left:"top.png", right:"top.png", front:"grass_side.png", back:"grass_side.png" },
+    hardness: 2
+  });
+
+  Registry("Block", {
+    id: "dirt",
+    textures: { top:"dirt.png", bottom:"dirt.png", left:"dirt.png", right:"dirt.png", front:"dirt.png", back:"dirt.png" },
+    hardness: 1
+  });
+
+  // --- Класс блока ---
+  class Block {
+    constructor(type, x, y, z) {
+      this.type = type;
+      this.data = {};
+      this.mesh = this.createMesh();
+      this.mesh.position.set(x, y, z);
+    }
+
+    createMesh() {
+      const reg = RegistryData.Block[this.type];
+      if (!reg) return new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({visible:false}));
+
+      const materials = [
+        new THREE.MeshBasicMaterial({ map: reg.textures.right }),
+        new THREE.MeshBasicMaterial({ map: reg.textures.left }),
+        new THREE.MeshBasicMaterial({ map: reg.textures.top }),
+        new THREE.MeshBasicMaterial({ map: reg.textures.bottom }),
+        new THREE.MeshBasicMaterial({ map: reg.textures.front }),
+        new THREE.MeshBasicMaterial({ map: reg.textures.back })
+      ];
+      return new THREE.Mesh(new THREE.BoxGeometry(1,1,1), materials);
+    }
+  }
+
+  // --- Генерация мира ---
+  const sizeX = 10, sizeY = 5, sizeZ = 10;
+  let world = [];
+
+  for (let x = 0; x < sizeX; x++) {
+    world[x] = [];
+    for (let y = 0; y < sizeY; y++) {
+      world[x][y] = [];
+      for (let z = 0; z < sizeZ; z++) {
+        let types = ["stone","grass","dirt","air"];
+        let type = types[Math.floor(Math.random()*types.length)];
+        let block = new Block(type, x, y, z);
+        world[x][y][z] = block;
+        if (type !== "air") scene.add(block.mesh);
+      }
+    }
+  }
+
+  // Добавляем свет
+  const ambientLight = new THREE.AmbientLight(0x404060);
+  scene.add(ambientLight);
+
+  // Функция рендера
+  function render() {
+    requestAnimationFrame(render);
+    
+    updateCamera();
+    
+    renderer.render(scene, camera);
+  }
+  render();
+
+  window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+</body>
+</html>
