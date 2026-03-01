@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>ZCreate - ТЕКСТУРЫ И ОПТИМИЗАЦИЯ</title>
+  <title>ZCreate - Фрустум + СВЕТ</title>
   <style>
     body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; touch-action: none; }
     #joystick-area {
@@ -43,7 +43,7 @@
     #save-button {
       position: absolute; top: 70px; right: 10px; background: rgba(0,100,200,0.9);
       color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px;
-      cursor: pointer; z-index: 100; backdrop-filter: blur(5px);
+      cursor: pointer; z-index: 100;
     }
     #inventory-toggle {
       position: absolute; top: 100px; right: 10px; background: rgba(150,100,0,0.9);
@@ -75,7 +75,6 @@
       justify-content: center; cursor: pointer; position: relative; font-size: 10px;
     }
     .inventory-slot:hover { background: rgba(100,100,100,0.5); }
-    .inventory-slot.selected { border-color: #ffaa00; background: rgba(255,170,0,0.2); }
     .slot-icon { font-size: 20px; }
     .slot-count { position: absolute; bottom: 2px; right: 5px; font-size: 10px; color: #aaa; }
     #hotbar {
@@ -89,7 +88,6 @@
       align-items: center; justify-content: center; position: relative; cursor: pointer;
     }
     .hotbar-slot.selected { border-color: #ffaa00; background: rgba(255,170,0,0.2); }
-    .hotbar-slot .slot-icon { font-size: 16px; }
   </style>
 </head>
 <body>
@@ -120,10 +118,12 @@
       // ==================== ОПТИМИЗАЦИИ ====================
       const fpsLimit = 30;
       let lastFrame = 0;
+      let frameCount = 0;
+      let lastTime = performance.now();
       
       // Пул векторов
       const vecPool = [];
-      for (let i = 0; i < 10; i++) vecPool.push(new THREE.Vector3());
+      for (let i = 0; i < 20; i++) vecPool.push(new THREE.Vector3());
       function getVec() { return vecPool.pop() || new THREE.Vector3(); }
       function freeVec(v) { vecPool.push(v); }
 
@@ -150,7 +150,6 @@
       registerTab('building', 'Стройка', '🏗️');
       registerTab('nature', 'Природа', '🌿');
       
-      // Регистрируем блоки с текстурами
       registerBlock('stone', { 
         name: 'Камень', 
         icon: '🪨', 
@@ -201,7 +200,7 @@
         } else camera.position.set(8, 20, 8);
       } catch { camera.position.set(8, 20, 8); }
 
-      // ==================== ТЕКСТУРЫ (загружаем 1 раз) ====================
+      // ==================== ТЕКСТУРЫ ====================
       const loader = new THREE.TextureLoader();
       const textureCache = {};
       
@@ -221,7 +220,7 @@
         return textureCache[path];
       }
 
-      // ==================== МАТЕРИАЛЫ (создаем один раз на каждый тип блока) ====================
+      // ==================== МАТЕРИАЛЫ ====================
       const materialCache = {};
       
       function getMaterialsForBlock(blockId) {
@@ -230,18 +229,33 @@
         const block = Registry.blocks[blockId];
         if (!block) return null;
         
+        // Используем MeshStandardMaterial чтоб работал свет!
         const materials = [
-          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.right) }),
-          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.left) }),
-          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.top) }),
-          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.bottom) }),
-          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.front) }),
-          new THREE.MeshBasicMaterial({ map: getTexture(block.textures.back) })
+          new THREE.MeshStandardMaterial({ map: getTexture(block.textures.right) }),
+          new THREE.MeshStandardMaterial({ map: getTexture(block.textures.left) }),
+          new THREE.MeshStandardMaterial({ map: getTexture(block.textures.top) }),
+          new THREE.MeshStandardMaterial({ map: getTexture(block.textures.bottom) }),
+          new THREE.MeshStandardMaterial({ map: getTexture(block.textures.front) }),
+          new THREE.MeshStandardMaterial({ map: getTexture(block.textures.back) })
         ];
         
         materialCache[blockId] = materials;
         return materials;
       }
+
+      // ==================== ОСВЕЩЕНИЕ ====================
+      // БЕЗ СВЕТА НИЧЕГО НЕ ВИДНО!
+      const ambientLight = new THREE.AmbientLight(0x404060); // Фоновый свет
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(10, 20, 10);
+      scene.add(directionalLight);
+      
+      // Добавляем второй свет с другой стороны чтоб не было черных теней
+      const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      backLight.position.set(-10, 10, -10);
+      scene.add(backLight);
 
       // ==================== ИНВЕНТАРЬ ====================
       let inventory = {
@@ -338,8 +352,15 @@
       const chunks = new Map();
       let activeChunks = new Set();
 
-      // ОДНА геометрия на все блоки
       const boxGeom = new THREE.BoxGeometry(1, 1, 1);
+
+      // ==================== ФРУСТУМ КАЛЛИНГ ====================
+      const frustum = new THREE.Frustum();
+      const projScreenMatrix = new THREE.Matrix4();
+      
+      // Вспомогательные векторы для проверки видимости чанка
+      const chunkMin = new THREE.Vector3();
+      const chunkMax = new THREE.Vector3();
 
       class Chunk {
         constructor(cx, cz) {
@@ -347,6 +368,8 @@
           this.blocks = new Map();
           this.meshGroup = new THREE.Group();
           this.generated = false;
+          this.lastVisibleCheck = 0;
+          this.isVisible = false;
         }
 
         generate() {
@@ -358,7 +381,6 @@
               const wx = startX + x;
               const wz = startZ + z;
               
-              // Простая генерация
               const h = Math.floor(Math.sin(wx * 0.5) * Math.cos(wz * 0.5) * 3 + 8);
               
               for (let y = 0; y < WORLD_HEIGHT; y++) {
@@ -373,6 +395,8 @@
                   const materials = getMaterialsForBlock(type);
                   const mesh = new THREE.Mesh(boxGeom, materials);
                   mesh.position.set(wx, y, wz);
+                  mesh.castShadow = true;
+                  mesh.receiveShadow = true;
                   mesh.userData = { type, x: wx, y, z: wz };
                   this.blocks.set(`${wx},${y},${wz}`, mesh);
                   this.meshGroup.add(mesh);
@@ -383,12 +407,39 @@
           this.generated = true;
         }
 
+        // Проверка видимости чанка (фрустум каллинг)
+        isChunkVisible() {
+          // Границы чанка
+          chunkMin.set(this.cx * CHUNK_SIZE, 0, this.cz * CHUNK_SIZE);
+          chunkMax.set((this.cx + 1) * CHUNK_SIZE, WORLD_HEIGHT, (this.cz + 1) * CHUNK_SIZE);
+          
+          // Проверяем пересечение с фрустумом
+          return frustum.intersectsBox(new THREE.Box3(chunkMin, chunkMax));
+        }
+
+        // Обновление видимости
+        updateVisibility() {
+          const visible = this.isChunkVisible();
+          if (visible !== this.isVisible) {
+            this.isVisible = visible;
+            if (visible) {
+              if (!this.meshGroup.parent) scene.add(this.meshGroup);
+            } else {
+              if (this.meshGroup.parent) scene.remove(this.meshGroup);
+            }
+          }
+        }
+
         show() { 
           if (!this.generated) this.generate(); 
+          this.isVisible = true;
           scene.add(this.meshGroup); 
         }
         
-        hide() { scene.remove(this.meshGroup); }
+        hide() { 
+          this.isVisible = false;
+          scene.remove(this.meshGroup); 
+        }
         
         removeBlock(x, y, z) {
           const key = `${x},${y},${z}`;
@@ -405,6 +456,8 @@
           const materials = getMaterialsForBlock(type);
           const mesh = new THREE.Mesh(boxGeom, materials);
           mesh.position.set(x, y, z);
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
           mesh.userData = { type, x, y, z };
           this.blocks.set(`${x},${y},${z}`, mesh);
           this.meshGroup.add(mesh);
@@ -413,13 +466,23 @@
 
       function getChunkKey(cx, cz) { return `${cx},${cz}`; }
 
+      // Обновление фрустума
+      function updateFrustum() {
+        projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+        frustum.setFromProjectionMatrix(projScreenMatrix);
+      }
+
       function updateChunks() {
+        updateFrustum();
+        
         const cx = Math.floor(camera.position.x / CHUNK_SIZE);
         const cz = Math.floor(camera.position.z / CHUNK_SIZE);
         
-        let total = 0;
+        let totalBlocks = 0;
+        let visibleBlocks = 0;
         const newActive = new Set();
         
+        // Загружаем чанки вокруг игрока
         for (let dx = -RENDER_DISTANCE; dx <= RENDER_DISTANCE; dx++) {
           for (let dz = -RENDER_DISTANCE; dz <= RENDER_DISTANCE; dz++) {
             const k = getChunkKey(cx + dx, cz + dz);
@@ -429,20 +492,32 @@
               const c = new Chunk(cx + dx, cz + dz);
               chunks.set(k, c);
               c.show();
-            } else {
-              const c = chunks.get(k);
-              if (!c.meshGroup.parent) c.show();
             }
-            if (chunks.has(k)) total += chunks.get(k).blocks.size;
           }
         }
         
+        // Обновляем видимость всех чанков
         for (const [k, c] of chunks) {
-          if (!newActive.has(k) && c.meshGroup.parent) c.hide();
+          if (newActive.has(k)) {
+            c.updateVisibility();
+            if (c.isVisible) {
+              visibleBlocks += c.blocks.size;
+            }
+            totalBlocks += c.blocks.size;
+          } else if (c.meshGroup.parent) {
+            c.hide();
+          }
         }
         
         activeChunks = newActive;
-        document.getElementById('chunk-info').innerHTML = `Чанк: ${cx},${cz} | Блоков: ${total}`;
+        
+        // Информация для отладки
+        document.getElementById('debug').innerHTML = 
+          `FPS: ${Math.round(1000 / (performance.now() - lastFrame))} | ` +
+          `Всего блоков: ${totalBlocks} | Видимых: ${visibleBlocks}`;
+        
+        document.getElementById('chunk-info').innerHTML = 
+          `Чанк: ${cx},${cz} | Загружено: ${activeChunks.size} | Видимых чанков: ${Array.from(chunks.values()).filter(c => c.isVisible).length}`;
       }
 
       // ==================== УПРАВЛЕНИЕ ====================
@@ -670,12 +745,6 @@
         freeVec(dir); freeVec(horiz); freeVec(right);
       }
 
-      // ==================== ОСВЕЩЕНИЕ ====================
-      scene.add(new THREE.AmbientLight(0x404060));
-      const light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.set(10, 20, 10);
-      scene.add(light);
-
       // ==================== СТАРТ ====================
       updateChunks();
       updateInventoryUI();
@@ -702,6 +771,15 @@
         camera.rotation.set(pitch, yaw, 0);
         
         move();
+        
+        // Обновляем фрустум каждый кадр
+        updateFrustum();
+        
+        // Обновляем видимость всех чанков
+        for (const chunk of chunks.values()) {
+          chunk.updateVisibility();
+        }
+        
         renderer.render(scene, camera);
       }
       requestAnimationFrame(render);
